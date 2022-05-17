@@ -1,0 +1,169 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap");
+.power-method-logos {
+    display: inline-flex;
+}
+
+.payment_box.payment_method_tz_tazapay {
+    text-align: center;
+}
+
+.payment_method_tz_tazapay .tazapay-payment-method {
+    max-height: inherit !important;
+    float: none !important;
+    margin-left: auto;
+    width: 100%;
+    height: auto;
+}
+
+.payment-method-logos p {
+    text-align: left;
+    margin-top: 15px !important;
+    color: #26536b;
+    font-size: 17px;
+}
+
+.power-method-logos .left-text p {
+    padding-right: 8px;
+    color: #26536b;
+    font-size: 17px;
+}
+
+.woocommerce-checkout-payment .wc_payment_method label {
+    margin: 0;
+}
+
+.tazapay_form.dokan-form-horizontal input {
+    width: 100%;
+}
+
+.tazapay_form.dokan-form-horizontal input[type="submit"] {
+    width: auto;
+}
+
+.payment_method_tz_tazapay label {
+    display: block !important;
+    position: relative;
+}
+
+.payment_method_tz_tazapay .tazapay-checkout-button {
+    margin-top: 20px;
+}
+
+.payment_box.payment_method_tz_tazapay {
+    display: none !important;
+}
+
+.payment_method_tz_tazapay .tazapay-payment-logo img {
+    float: none !important;
+    max-width: 80px;
+    max-height: inherit;
+}
+
+.payment_method_tz_tazapay .tazapay-checkout-button p {
+    font-family: "IBM Plex Sans", sans-serif;
+    color: #26536b;
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 500;
+}
+
+.payment_method_tz_tazapay .tazapay-payment-method {
+    margin-top: 10px;
+}
+
+.payment_method_tz_tazapay .tazapay-payment-method img {
+    width: auto;
+    margin-left: 0;
+}
+
+#wcfm_service_listing_expander .container {
+    width: 100%;
+    display: block;
+}
+
+#wcfm_service_listing_expander h2 {
+    width: 100%;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+#wcfm_service_listing_expander select {
+    width: 245px;
+    padding: 9px 5px;
+}
+
+#wcfm_service_listing_expander .dokan-form-group {
+    margin-bottom: 10px;
+}
+
+#wcfm_service_listing_expander input {
+    width: 245px;
+}
+
+#wcfm_service_listing_expander input[type="submit"] {
+    width: auto;
+}
+
+#wcfm_service_listing_expander label.error {
+    color: red;
+    display: block;
+    width: 100%;
+}
+
+@media (min-width: 600px) {
+    .payment_method_tz_tazapay .tazapay-payment-logo {
+        display: flex;
+        align-items: center;
+    }
+    .payment_method_tz_tazapay .tazapay-payment-logo span {
+        border-right: 2px solid #e2e8f0;
+        margin-right: 5px;
+        padding-right: 5px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    #payment .place-order .button {
+        font-size: 18px !important;
+    }
+}
+
+@media (min-width: 600px) and (max-width: 1024px) {
+    .checkout.woocommerce-checkout .col2-set,
+    .checkout.woocommerce-checkout #order_review_heading,
+    .checkout.woocommerce-checkout #order_review {
+        width: 100%;
+        float: none;
+        margin-right: 0;
+    }
+    .payment_method_tz_tazapay label {
+        position: relative;
+    }
+    .payment_method_tz_tazapay label .tazapay-checkout-button {
+        position: absolute;
+        right: 1.41575em;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-top: 0;
+    }
+    .payment_method_tz_tazapay .tazapay-payment-method img {
+        margin-left: auto;
+    }
+    .payment_method_tz_tazapay .payment-method-logos p {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 599px) {
+    .payment_method_tz_tazapay .tazapay-checkout-button p {
+        margin: 8px 0 10px !important;
+    }
+    .payment_method_tz_tazapay .tazapay-payment-logo img {
+        max-width: 160px;
+    }
+    .payment_method_tz_tazapay .tazapay-payment-method img {
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 2px;
+        padding: 9px !important;
+    }
+}
