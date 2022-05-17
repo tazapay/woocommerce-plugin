@@ -1,0 +1,159 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: de_DE\n"
+"X-Generator: Poedit 3.0\n"
+
+msgid "Enable/Disable"
+msgstr "Inschakelen/Uitschakelen"
+
+msgid "Collect payments from buyers, hold it until the seller/service provider fulfills their obligations before releasing the payment to them."
+msgstr "Incasseer betalingen van kopers, houd deze vast totdat de verkoper/dienstverlener aan hun verplichtingen heeft voldaan voordat u de betaling aan hen vrijgeeft."
+
+msgid "Enable TazaPay Gateway"
+msgstr "TazaPay gateway inschakelen"
+
+msgid "Enable TazaPay payment method"
+msgstr "TazaPay betaalmethode inschakelen"
+
+msgid "Backend payment method title"
+msgstr "Titel van backend betaalmethode"
+
+msgid "A short synopsis of the type of goods/service"
+msgstr "Een korte samenvatting van het soort goederen/dienst"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Transaction Description"
+msgstr "Transactiebeschrijving"
+
+msgid "Sandbox mode"
+msgstr "Sandbox modus"
+
+msgid "Release Mechanism"
+msgstr "Vrijgavemechanisme"
+
+msgid "Enable Sandbox Mode"
+msgstr "Sandbox modus inschakelen"
+
+msgid "Place the payment gateway in sandbox mode using sandbox API keys."
+msgstr "Plaats de betalingsgateway in sandbox-modus met behulp van sandbox API sleutels."
+
+msgid "Sandbox API Key"
+msgstr "Sandbox API sleutel"
+
+msgid "Sandbox API Secret Key"
+msgstr "Sandbox API geheime sleutel"
+
+msgid "TazaPay sandbox API Key"
+msgstr "TazaPay sandbox API sleutel"
+
+msgid "TazaPay sandbox API Secret Key"
+msgstr "TazaPay sandbox API geheime sleutel"
+
+msgid "Live API Key"
+msgstr "Live API sleutel"
+
+msgid "Live API Secret Key"
+msgstr "Live API geheime sleutel"
+
+msgid "Name"
+msgstr "Naam"
+
+msgid "Seller's Name"
+msgstr "Naam van de verkoper"
+
+msgid "Email"
+msgstr "E-mail"
+
+msgid "Seller's Email"
+msgstr "E-mail van de verkoper"
+
+msgid "Entity Type"
+msgstr "Entiteitstype"
+
+msgid "User's entity type"
+msgstr "Entiteitstype van de gebruiker"
+
+msgid "Country"
+msgstr "Land"
+
+msgid "User's country"
+msgstr "Land van gebruiker"
+
+msgid "Transaction Type"
+msgstr "Transactie Type"
+
+msgid "Type of underlying trade"
+msgstr "Type onderliggende transactie"
+
+msgid "Specify who control release verification"
+msgstr "Specificeer wie de vrijgaveverificatie beheert"
+
+msgid "Fee Paid By"
+msgstr "Vergoeding betaald door"
+
+msgid "Tazapay account uuid. If empty; contracted value will get applied"
+msgstr "Tazapay account uuid. Indien leeg; gecontracteerde waarde wordt toegepast"
+
+msgid "Place the payment gateway in sandbox mode using sandbox API keys"
+msgstr "Plaats de betalingsgateway in sandbox-modus met behulp van sandbox API sleutels"
+
+msgid "Request credentials"
+msgstr "Inloggegevens aanvragen"
+
+msgid "Request credentials for accepting payments via TazaPay"
+msgstr "Inloggegevens aanvragen voor het accepteren van betalingen via TazaPay"
+
+msgid "TazaPay Live API Key"
+msgstr "TazaPay Live API sleutel"
+
+msgid "TazaPay Live API Secret Key"
+msgstr "TazaPay Live API geheime sleutel"
+
+msgid "User Type"
+msgstr "Gebruikerstype"
+
+msgid "First Name"
+msgstr "Voornaam"
+
+msgid "Last Name"
+msgstr "Achternaam"
+
+msgid "Contact Code"
+msgstr "Contactcode"
+
+msgid "Contact Number"
+msgstr "Contact nummer"
+
+msgid "Created"
+msgstr "Gemaakt"
+
+msgid "Bussiness Name"
+msgstr "Bedrijfsnaam"
+
+msgid "Partners Customer ID"
+msgstr "Partners Klant ID"
+
+msgid "Place Order and Pay"
+msgstr "Bestelling plaatsen en betalen"
+
+msgid "Edit TazaPay Account UUID"
+msgstr "Bewerk TazaPay account UUID"
+
+msgid "Update"
+msgstr "Bijwerken"
+
+msgid "TazaPay Account UUID updated."
+msgstr "TazaPay account UUID bijgewerkt."
+
+msgid "TazaPay Users"
+msgstr "TazaPay gebruikers"
