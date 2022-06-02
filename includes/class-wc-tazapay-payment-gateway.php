@@ -968,6 +968,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
             $argsEscrow = array(
                 "txn_type"              => $this->txn_type_escrow,
+                "transaction_source"    => "woocommerce",
                 "release_mechanism"     => $this->release_mechanism,
                 "initiated_by"          => $seller_id,
                 "buyer_id"              => $account_id,
