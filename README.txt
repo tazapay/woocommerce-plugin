@@ -1,9 +1,10 @@
 === Tazapay Checkout Payment Gateway ===
 Contributors: tazapay
+Donate link: https://tazapay.com/
 Tags: TazaPay, WooCommerce, credit card, gateway
 Requires at least: 4.0
-Tested up to: 5.8
-Stable tag: 1.2.1
+Tested up to: 6.0
+Stable tag: 1.3.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -12,7 +13,7 @@ This plugin enables your WooCommerce powered platform to start accepting interna
 
 == Description ==
 
-* How do Tazapay's escrow payments work?
+* How do Tazapay's escrow payments work ?
 1. The buyer can select the product or service and make a payment like any other online checkout option (available payment methods depend on the buyer's country and the amount of money to be transferred)
 2. Once the payment is complete, the funds are received and secured in a bank account under the jurisdiction of MAS (Monetary Authority of Singapore)
 3. Once the product is shipped or the services rendered, the seller (or your platform) can provide a proof of order fulfillment to Tazapay for verification
@@ -47,7 +48,7 @@ This plugin enables your WooCommerce powered platform to start accepting interna
 
 = How to get your credentials? =
 
-https://share.hsforms.com/1RcEF-LvgQv-6fArLsYSRwA4qumh
+https://app.tazapay.com/signup
 
 
 == Screenshots ==
@@ -59,7 +60,17 @@ https://share.hsforms.com/1RcEF-LvgQv-6fArLsYSRwA4qumh
 5. Order thank you page
 
 == Changelog ==
-
+ver 1.1.3:  
+- Escrow initiatiated by Seller ID (bug fix) 
+ver 1.2.1: 
+- Seller email and api key Validation at WooCommerce Tazapay settings 
+- Payment logo update
+ver 1.2.2:
+- Now the value of transaction_source can also be passed
+- Tested up to: 6.0
+ver 1.3.0:
+- Refund module integrated 
+- Tested up to: 6.0
 
 == Upgrade Notice ==
 
