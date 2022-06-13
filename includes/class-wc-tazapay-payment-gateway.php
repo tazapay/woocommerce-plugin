@@ -13,10 +13,13 @@ class TCPG_Gateway extends WC_Payment_Gateway
         $this->method_title = 'Tazapay Gateway';
         $this->method_description = __('Collect payments from buyers, hold it until the seller/service provider fulfills their obligations before releasing the payment to them.', 'wc-tp-payment-gateway'); // will be displayed on the options page
 
+        $this->callBackUrl = get_site_url().'/wc-api/'.$this->id;
+
         // gateways can support subscriptions, refunds, saved payment methods,
         // but in this gateway we begin with simple payments
         $this->supports = array(
-            'products'
+            'products',
+            'refunds'
         );
 
         
@@ -50,6 +53,9 @@ class TCPG_Gateway extends WC_Payment_Gateway
         // Load the settings.
         $this->init_settings();
 
+        global $woocommerce, $post;
+        $this->update_status($post->ID);
+
         // This action hook saves the settings
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'tcpg_getuser_info_options'));
@@ -61,6 +67,9 @@ class TCPG_Gateway extends WC_Payment_Gateway
         add_action('woocommerce_admin_order_data_after_order_details', array($this, 'tcpg_order_meta_general'));
 
         add_action('wp_ajax_order_status_refresh', array($this, 'tazapay_order_status_refresh'));
+
+        add_action( 'woocommerce_api_tz_tazapay' , array( $this, 'webhook' ) );
+        
     }
 
     /*
@@ -231,6 +240,217 @@ class TCPG_Gateway extends WC_Payment_Gateway
             //}
         }
     }
+
+    /*
+    * This plugin will wordk to refund payment which payment has been done
+    * Pass transaction ID to refund amount to buyer
+    */ 
+    public function process_refund($orderId, $amount = null, $reason = 'refund')
+    {
+        $order = wc_get_order($orderId);
+        $txn_no         = get_post_meta($orderId, 'txn_no', true);
+        if (! $order or ! $txn_no)
+        {
+            return new WP_Error('error', __('Refund failed: No transaction ID', 'woocommerce'));
+        }
+
+        if($order->get_payment_method() == 'tz_tazapay')
+        {
+            $convamount = floatval($amount);
+            $refundArg = array(
+                'txn_no' => $txn_no,
+                'amount' => $convamount,
+                'callback_url' => $this->callBackUrl,
+                'remarks' => $reason
+            );
+
+            $api_endpoint = "/v1/payment/refund/request";
+            $api_url      = $this->base_api_url . '/v1/payment/refund/request';
+            $result       = $this->tcpg_request_apicall($api_url, $api_endpoint, $refundArg, $orderId);
+
+            if(!empty($result))
+            {
+                if ($result->status == 'error') {
+                    $message = $result->errors[0]->message;
+                    return new WP_Error('error', __($message, 'woocommerce'));
+                }
+
+                //Success
+                if ($result->status == 'created') {
+                    $reference_id = $result->data->reference_id;
+                    //$reference_id = json_encode($result);
+                    update_post_meta($orderId, 'reference_id', $reference_id);
+                    //$order->update_status( $order->update_status( 'refunded', __( 'Paid order refunded.', 'woocommerce' ) ) );
+                }
+            }
+        }
+        return true;
+    }
+
+
+    function webhook() {
+        header( 'HTTP/1.1 200 OK' );
+        $respnse = json_decode(file_get_contents("php://input"),true);
+        if($respnse['status'] == 'requested')
+        {
+            $reference_id = $respnse['reference_id'];
+            $post_id = tazapay_post_id_by_meta_key_and_value('reference_id',$reference_id);
+            $my_post = array(
+                'ID'           => $post_id,
+                'post_status'   => 'wc-processing',
+            );
+            wp_update_post( $my_post );
+        }
+
+        if($respnse['status'] == 'approved')
+        {
+            $reference_id = $respnse['reference_id'];
+            $post_id = tazapay_post_id_by_meta_key_and_value('reference_id',$reference_id);
+            $post = get_post($post_id);
+            $post->post_status = "wc-refunded";
+            wp_update_post( $post );
+            $data = array(
+                'comment_post_ID' => $post_id,
+                'comment_author' => 'WooCommerce',
+                'comment_author_email' => 'woocommerce@democenter.net',
+                'comment_author_url' => '',
+                'comment_content' => 'Refund request has been approved, reference id '.$reference_id,
+                'comment_author_IP' => '',
+                'comment_agent' => 'WooCommerce',
+                'comment_type'  => 'order_note',
+                'comment_date' => date('Y-m-d H:i:s'),
+                'comment_date_gmt' => date('Y-m-d H:i:s'),
+                'comment_approved' => 1,
+            );
+            $comment_id = wp_insert_comment($data);
+        }
+
+        if($respnse['status'] == 'rejected'){
+            $reference_id = $respnse['reference_id'];
+            $post_id = tazapay_post_id_by_meta_key_and_value('reference_id',$reference_id);
+            $post = get_post($post_id);
+            $post->post_status = "wc-processing";
+            wp_update_post( $post );
+            //Delete row when rejected
+            $args = array(
+                'posts_per_page' => 1,
+                'order'          => 'DESC',
+                'post_parent'    => $post_id,
+                'post_type'      => 'shop_order_refund'
+                );
+             
+            $get_children_array = get_children( $args,ARRAY_A );
+            if (!empty($get_children_array)) {
+                foreach ($get_children_array as $post ) {
+                    wp_delete_post( $post['ID'], true );
+                }
+            }
+            //End delete
+            $data = array(
+                'comment_post_ID' => $post_id,
+                'comment_author' => 'WooCommerce',
+                'comment_author_email' => 'woocommerce@democenter.net',
+                'comment_author_url' => '',
+                'comment_content' => 'Refund request has been cancelled',
+                'comment_author_IP' => '',
+                'comment_agent' => 'WooCommerce',
+                'comment_type'  => 'order_note',
+                'comment_date' => date('Y-m-d H:i:s'),
+                'comment_date_gmt' => date('Y-m-d H:i:s'),
+                'comment_approved' => 1,
+            );
+            $comment_id = wp_insert_comment($data);
+        }
+        die();
+    }
+
+public function update_status($post_id)
+{
+            $txn_no         = get_post_meta($post_id, 'txn_no', true);
+            $paymentMethod  = get_post_meta($post_id, '_payment_method', true);
+            $payment_title  = get_post_meta($post_id, '_payment_method_title', true);
+    if (!empty($txn_no) && $paymentMethod == 'tz_tazapay') {
+
+        //$tcpg_request_api_orderstatus = new TCPG_Gateway();
+        $getEscrowstate = $this->tcpg_request_api_orderstatus($txn_no);
+        $getRefundStatus = $this->tcpg_request_api_refundstatus($txn_no);
+        
+        if($getRefundStatus->data[0]->status == 'approved'){
+            updatePostStatus($post_id, 'wc-refunded');  //Refund status
+        }elseif($getRefundStatus->data[0]->status == 'requested'){
+            updatePostStatus($post_id, 'wc-processing');  //Refund status
+        }elseif($getRefundStatus->data[0]->status == 'rejected'){
+            updatePostStatus($post_id, 'wc-processing');  //Refund status
+        }
+        else{
+        
+        }
+    }
+}
+
+
+    /*
+    * Get escrow status by txn_no
+    */
+    public function tcpg_request_api_refundstatus($txn_no)
+    {
+        /*
+        * generate salt value
+        */
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
+        $l = strlen($chars) - 1;
+        $salt = '';
+        for ($i = 0; $i < 8; ++$i) {
+            $salt .= $chars[rand(0, $l)];
+        }
+
+        $method = "GET";
+        $APIEndpoint = "/v1/payment/refund/status";
+        $timestamp = time();
+        $apiKey      = $this->live_api_key;
+        $apiSecret   = $this->live_api_secret_key;
+        $api_url = $this->base_api_url;
+
+        /*
+        * generate to_sign
+        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
+        */
+        $to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
+
+        /*
+        * generate signature
+        * $hmacSHA256 is generate hmacSHA256
+        * $signature is convert hmacSHA256 into base64 encode
+        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
+        */
+        $hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
+        $signature = base64_encode($hmacSHA256);
+
+        $response = wp_remote_post(
+            esc_url_raw($api_url) . $APIEndpoint . '?txn_no=' . $txn_no,
+            array(
+                'method'      => 'GET',
+                'sslverify'   => false,
+                'headers'     => array(
+                    'accesskey' => $apiKey,
+                    'salt' => $salt,
+                    'signature' => $signature,
+                    'timestamp' => $timestamp,
+                    'Content-Type' => 'application/json'
+                )
+            )
+        );
+        if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
+            esc_html_e('Something went wrong: ' . $error_message, 'wc-tp-payment-gateway');
+        } else {
+            $api_array = json_decode(wp_remote_retrieve_body($response));
+        }
+
+        return $api_array;
+    }
+
+
     /*
     * Get phone code
     * @return string
@@ -1334,6 +1554,26 @@ class TCPG_Gateway extends WC_Payment_Gateway
     }
 }
 
+
+/*
+ * Returns matched post IDs for a pair of meta key and meta value from database
+ *
+ * @param string $meta_key
+ * @param mixed $meta_value
+ *
+ * @return array|int Post ID(s)
+ */
+function tazapay_post_id_by_meta_key_and_value( $meta_key, $meta_value ){
+	global $wpdb;
+ 
+	$ids = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = %s AND meta_value = %s", $meta_key, $meta_value ) );
+ 
+	if( count( $ids ) > 1 ) 
+		return $ids; // return array
+	else
+		return $ids[0]; // return int
+}
+
 // Jquery script that send the Ajax request
 add_action('woocommerce_after_checkout_form', 'tcpg_custom_checkout_js_script');
 function tcpg_custom_checkout_js_script()
@@ -1516,9 +1756,26 @@ function tcpg_orders_list_column_content($column, $post_id)
 
                 $tcpg_request_api_orderstatus = new TCPG_Gateway();
                 $getEscrowstate = $tcpg_request_api_orderstatus->tcpg_request_api_orderstatus($txn_no);
-
-                if($getEscrowstate->status != 'error'){
-                ?>
+                $getRefundStatus = $tcpg_request_api_orderstatus->tcpg_request_api_refundstatus($txn_no);
+                
+                if($getRefundStatus->data[0]->status == 'approved'){
+                    //updatePostStatus($post_id, 'wc-refunded');  //Refund status
+                    ?>
+                        <p><strong>Tazapay Refunded</strong></p>
+                    <?php
+                }elseif($getRefundStatus->data[0]->status == 'requested'){
+                    //updatePostStatus($post_id, 'wc-processing');  //Refund status
+                    ?>
+                        <p><strong>Tazapay Refund Requested</strong></p>
+                    <?php
+                }elseif($getRefundStatus->data[0]->status == 'rejected'){
+                    //updatePostStatus($post_id, 'wc-processing');  //Refund status
+                    ?>
+                        <p><strong>Tazapay Refund Rejected</strong></p>
+                    <?php
+                }
+                else{
+                    ?>
                     <p><strong><?php esc_html_e('Escrow state: ', 'wc-tp-payment-gateway'); ?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway'); ?></p>
                     <p><strong><?php esc_html_e('Escrow sub_state: ', 'wc-tp-payment-gateway'); ?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway'); ?></p>
                 <?php
@@ -1527,6 +1784,21 @@ function tcpg_orders_list_column_content($column, $post_id)
                 esc_html_e($payment_title, 'wc-tp-payment-gateway');
             }
             break;
+    }
+}
+
+
+
+function updatePostStatus($post_id, $status)
+{
+    $post_status = get_post_field( 'post_status', $post_id, true );
+    if($post_status != $status)
+    {
+        $my_post = array(
+            'ID'           => $post_id,
+            'post_status'   => $status,
+        );
+        wp_update_post( $my_post );
     }
 }
 
@@ -1607,4 +1879,15 @@ function tcpg_view_order_page($order_id)
             }
         }
     }
+}
+
+
+add_action('admin_head', 'remove_manual_refunds');
+
+function remove_manual_refunds() {
+  echo '<style>
+    .do-manual-refund {
+    display: none !important;
+    }
+  </style>';
 }
