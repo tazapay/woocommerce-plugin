@@ -4,7 +4,7 @@ Donate link: https://tazapay.com/
 Tags: TazaPay, WooCommerce, credit card, gateway
 Requires at least: 4.0
 Tested up to: 6.0
-Stable tag: 1.3.0
+Stable tag: 1.3.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -66,11 +66,13 @@ ver 1.2.1:
 - Seller email and api key Validation at WooCommerce Tazapay settings 
 - Payment logo update
 ver 1.2.2:
-- Now the value of transaction_source can also be passed
-- Tested up to: 6.0
+- Now the value of transaction_source can also be passed 
 ver 1.3.0:
 - Refund module integrated 
-- Tested up to: 6.0
+ver 1.3.1:
+- Refund module text changes 
+ver 1.3.2:
+- Installation Warning bug fixed
 
 == Upgrade Notice ==
 
