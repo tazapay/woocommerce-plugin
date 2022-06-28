@@ -8,7 +8,7 @@
 
  * Description:       Pay securely with buyer protection.
 
- * Version:           1.3.2
+ * Version:           1.3.3
 
  * Author:            Tazapay
 
@@ -23,7 +23,7 @@
  * Domain Path:       /languages
 
  */
-ini_set('display_errors','Off');
+
 define('TCPG_CSS_JSS_VERISON', time());
 
 define('TCPG_PUBLIC_ASSETS_DIR', plugins_url('assets/', __FILE__));
