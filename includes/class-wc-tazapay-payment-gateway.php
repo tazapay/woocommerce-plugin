@@ -1611,18 +1611,31 @@ function tcpg_custom_checkout_js_script() {
             var field = '[name="<?php esc_html_e($field_key, 'wc-tp-payment-gateway');?>"]';
 
             $('form.checkout').on('input change', field, function() {
-                $.ajax({
-                    type: 'POST',
-                    url: wc_checkout_params.ajax_url,
-                    data: {
-                        'action': 'targeted_checkout_field_change',
-                        'field_key': '<?php esc_html_e($field_key, 'wc-tp-payment-gateway');?>',
-                        'field_value': $(this).val(),
-                    },
-                    success: function(result) {
-                        $(document.body).trigger('update_checkout');
-                    },
-                });
+							fetch(wc_checkout_params.ajax_url,
+								{
+									method: "POST", 
+									body: {
+										'action': 'targeted_checkout_field_change',
+										'field_key': '<?php esc_html_e($field_key, 'wc-tp-payment-gateway');?>',
+										'field_value': $(this).val(),
+									},
+								}).then(() => {
+									$(document.body).trigger('update_checkout');
+								}).catch(err => {
+									console.error('fetch failder error', err);
+								})
+                // $.ajax({
+                //     type: 'POST',
+                //     url: wc_checkout_params.ajax_url,
+                //     data: {
+                //         'action': 'targeted_checkout_field_change',
+                //         'field_key': '< ?php esc_html_e($field_key, 'wc-tp-payment-gateway');?>',
+                //         'field_value': $(this).val(),
+                //     },
+                //     success: function(result) {
+                //         $(document.body).trigger('update_checkout');
+                //     },
+                // });
             });
         });
     </script>
