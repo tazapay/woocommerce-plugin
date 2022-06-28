@@ -1604,7 +1604,7 @@ function tcpg_custom_checkout_js_script() {
 	WC()->session->__unset('field_' . $field_key);
 	?>
     <script type="text/javascript">
-        
+        (function(){
             if (typeof wc_checkout_params === 'undefined')
                 return false;
 
@@ -1627,6 +1627,7 @@ function tcpg_custom_checkout_js_script() {
 									console.error('fetch failder error', err);
 								})
 							}
+						})()
                 // $.ajax({
                 //     type: 'POST',
                 //     url: wc_checkout_params.ajax_url,
