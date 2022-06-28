@@ -1604,13 +1604,15 @@ function tcpg_custom_checkout_js_script() {
 	WC()->session->__unset('field_' . $field_key);
 	?>
     <script type="text/javascript">
-        jQuery(function($) {
+        
             if (typeof wc_checkout_params === 'undefined')
                 return false;
 
-            var field = '[name="<?php esc_html_e($field_key, 'wc-tp-payment-gateway');?>"]';
-
-            $('form.checkout').on('input change', field, function() {
+            // var field = '[name="< ?php esc_html_e($field_key, 'wc-tp-payment-gateway');?>"]';
+            // $('form.checkout').on('input change', field, function() {
+						const checkoutButton = document.getElementById('place_order');
+						checkoutButton.addEventListener("click",fetchAPI)
+						fetchAPI(){						
 							fetch(wc_checkout_params.ajax_url,
 								{
 									method: "POST", 
@@ -1624,6 +1626,7 @@ function tcpg_custom_checkout_js_script() {
 								}).catch(err => {
 									console.error('fetch failder error', err);
 								})
+							}
                 // $.ajax({
                 //     type: 'POST',
                 //     url: wc_checkout_params.ajax_url,
@@ -1636,8 +1639,7 @@ function tcpg_custom_checkout_js_script() {
                 //         $(document.body).trigger('update_checkout');
                 //     },
                 // });
-            });
-        });
+            // });        
     </script>
     <?php
 }
