@@ -5,6 +5,8 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	 */
 	public function __construct() {
 
+		session_start();
+
 		$this->id = 'tz_tazapay'; // payment gateway plugin ID
 		$this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
 		$this->has_fields = true; // in case you need a custom form
@@ -44,9 +46,21 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 			$this->environment = 'production';
 		}
 
-		$txt = date('m/d/Y H:i:s') . " > Start > Get initial User API> tcpg_payment_gateway_disable_tazapay > /v1/user/ \n";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
-		$this->seller_data = $this->tcpg_request_api_getuser($this->get_option('seller_email'));
+		//$this->create_taza_logs("Start > Get initial User API> tcpg_payment_gateway_disable_tazapay > /v1/user/ \n");
+		//$this->seller_data = $this->tcpg_request_api_getuser($this->get_option('seller_email'));
+
+		//$this->countryconfig = $this->tcpg_request_api_countryconfig($this->seller_data->data->country_code);
+
+		if(empty($_SESSION['seller_info']))
+		{
+			$_SESSION['seller_info'] = $this->save_seller_information($this->get_option('seller_email'));
+			$this->seller_data = $_SESSION['seller_info']->info;
+			$this->countryconfig = $_SESSION['seller_info']->seller_country;
+		}else{
+			$this->seller_data = $_SESSION['seller_info']->info;
+			$this->countryconfig = $_SESSION['seller_info']->seller_country;
+		}
+
 
 		// Method with all the options fields
 		$this->init_form_fields();
@@ -73,12 +87,170 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		add_action('wp_ajax_order_status_refresh', array($this, 'tazapay_order_status_refresh'));
 
 		add_action('woocommerce_api_tz_tazapay', array($this, 'webhook'));
+	
+	}
 
+	/*
+	*This function will work to store the information of seller
+	*/
+	public function save_seller_information($seller_email = "")
+	{
+		if($seller_email != "")
+		{
+			global $wpdb;
+
+			$table_seller_info = $wpdb->prefix . 'tazapay_seller_info';
+			$table_country_config = $wpdb->prefix . 'tazapay_seller_country_config';
+			$results = $wpdb->get_results("SELECT * FROM $table_seller_info WHERE  `email` = '$seller_email'");
+			if(!empty($results))
+			{
+				return $this->convertInObject($results[0]);	//CALLING FUNCTION TO CONVERT FROM ARRAY TO OBJECT
+			}else{ 
+				require_once(ABSPATH . 'wp-content/plugins/tazapay/wc-tazapay-payment-gateway.php');
+				tcpg_seller_info_install();   //DROP TABLE FOR INSERTING FRESH SELLER INFORMATION
+				tcpg_country_config_install();	//DROP TABLE FOR INSERTING FRESH SELLER COUNTRY INFORMATION
+				$sellerData = array();
+				$countryConfigData = array();
+				$gerSellerInfo = (object)array();
+				$sellerInfo = $this->tcpg_request_api_getuser($seller_email);
+				if($sellerInfo->status == 'success')
+				{
+					//*******START TO ADD SELLER INFO*****//
+					$gerSellerInfo->info = $sellerInfo;
+					$insert_seller_id = $wpdb->insert(
+						$table_seller_info,
+						array(
+							'account_id' => $sellerInfo->data->id,
+							'company_name' => $sellerInfo->data->company_name,
+							'first_name' => $sellerInfo->data->first_name,
+							'last_name' => $sellerInfo->data->last_name,
+							'email' => $sellerInfo->data->email,
+							'country' => $sellerInfo->data->country,
+							'country_code' => $sellerInfo->data->country_code,
+							'contact_code' => $sellerInfo->data->contact_code,
+							'contact_number' => $sellerInfo->data->contact_number,
+							'customer_id' => $sellerInfo->data->customer_id,
+							'ind_bus_type' => $sellerInfo->data->ind_bus_type,
+							'status' => $sellerInfo->status
+						),
+						array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+					);
+					$seller_info_id = $wpdb->insert_id;
+
+					//*******END TO ADD SELLER INFO*****//
+
+					//*******START TO ADD SELLER COUNTRY INFO*****//
+
+					$country_config_type = array('buyer_countries','seller_countries');
+					$sellerCountryConfig = $this->tcpg_request_api_countryconfig($sellerInfo->data->country_code);
+					if($sellerCountryConfig->status == 'success')
+					{
+						$gerSellerInfo->seller_country = $sellerCountryConfig;
+						$market_type = $sellerCountryConfig->data->market_type;
+						$status = $sellerCountryConfig->status;
+						$convertArrayCountry = (array)$sellerCountryConfig->data;
+						for($i = 0; $i <= count($country_config_type)-1; $i++)
+						{
+							if(isset($convertArrayCountry[$country_config_type[$i]]))
+							{
+								$country = $convertArrayCountry[$country_config_type[$i]];
+								foreach($country as $value)
+								{
+									$wpdb->insert($table_country_config,
+									array(
+										'seller_info_id' => $seller_info_id,
+										'market_type' => $market_type,
+										'country_config_type' => $country_config_type[$i],
+										'country_config_code' => $value,
+										'status' => $status,
+									),
+									array('%s', '%s', '%s', '%s', '%s')
+								);
+								}
+							}
+						}
+					}
+					//*******END TO ADD SELLER COUNTRY INFO*****//
+					unset($_SESSION['seller_info']);
+					$_SESSION['seller_info'] = $gerSellerInfo;
+					return $gerSellerInfo;
+				}
+			}
+		}
+	}
+
+	/*
+	*THIS FUNCTION IS BEING CALLED FOR CONVERTING IN OBJECT FROM ARRAY
+	*/
+	public function convertInObject($sellerinfo = "")
+	{
+		$gerSellerInfo = (object)array();
+		$gerSellerInfo2 = (object)array();
+		$gerSellerInfo3 = (object)array();
+		$gerSellerInfo->status = $sellerinfo->status;
+		$gerSellerInfo2->id = $sellerinfo->account_id;
+		$gerSellerInfo2->company_name = $sellerinfo->company_name;
+		$gerSellerInfo2->first_name = $sellerinfo->first_name;
+		$gerSellerInfo2->last_name = $sellerinfo->last_name;
+		$gerSellerInfo2->email = $sellerinfo->email;
+		$gerSellerInfo2->country = $sellerinfo->country;
+		$gerSellerInfo2->country_code = $sellerinfo->country_code;
+		$gerSellerInfo2->contact_code = $sellerinfo->contact_code;
+		$gerSellerInfo2->contact_number = $sellerinfo->contact_number;
+		$gerSellerInfo2->customer_id = $sellerinfo->customer_id;
+		$gerSellerInfo2->ind_bus_type = $sellerinfo->ind_bus_type;
+		$gerSellerInfo->data = $gerSellerInfo2;
+		$gerSellerInfo3->info = $gerSellerInfo;
+
+		//------------------------------Seller country config--------------------
+		global $wpdb;
+		$id = $sellerinfo->id;
+		$table_country_config = $wpdb->prefix . 'tazapay_seller_country_config';
+		$results = $wpdb->get_results("SELECT * FROM $table_country_config WHERE  `seller_info_id` = '$id'");
+		if(!empty($results))
+		{
+			$getCountry = (object)array();
+			$getCountry2 = (object)array();
+			$array = array();
+			$buyer_countries = array();
+			$seller_countries = array();
+			$country_config_type = array('buyer_countries','seller_countries');
+				foreach($results as $value)
+				{
+					$getCountry->status = $value->status;
+					$getCountry2->market_type = $value->market_type;
+					if($value->country_config_type == 'buyer_countries')
+					{
+						array_push($buyer_countries,$value->country_config_code);
+					}
+					elseif($value->country_config_type == 'seller_countries')
+					{
+						array_push($seller_countries,$value->country_config_code);
+					}
+				}
+				
+				$getCountry2->buyer_countries = $buyer_countries;
+				$getCountry2->seller_countries = $seller_countries;
+				$getCountry->data = $getCountry2;
+				$gerSellerInfo3->seller_country = $getCountry;
+		}
+		return $gerSellerInfo3;
 	}
 
 	/*
 		    * Plugin options
 	*/
+	public function create_taza_logs($msg = '') {
+		$t = microtime(true);
+		$micro = sprintf("%06d", ($t - floor($t)) * 1000000);
+		$d = new DateTime(date('Y-m-d H:i:s.' . $micro, $t));
+		$time = $d->format("m/d/Y H:i:s v") . 'ms ';
+
+		$txt = $time . " > {$msg}";
+		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+	}
+
 	public function init_form_fields() {
 		global $woocommerce, $wpdb;
 
@@ -217,9 +389,13 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	}
 
 	public function tcpg_getuser_info_options() {
-		$txt = date('m/d/Y H:i:s') . " > Start > Get User API> tcpg_getuser_info_options > /v1/user/";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
-		$getuserapi = $this->tcpg_request_api_getuser($this->get_option('seller_email'));
+
+		//	$this->create_taza_logs("Start > Get User API> tcpg_getuser_info_options > /v1/user/");
+
+		$getSellerInfo = $this->save_seller_information($this->get_option('seller_email'));
+
+		//$getuserapi = $this->tcpg_request_api_getuser($this->get_option('seller_email'));
+		$getuserapi = $getSellerInfo->info;
 
 		if (!empty($getuserapi->data->id)) {
 			$seller_account_id = $getuserapi->data->id;
@@ -245,8 +421,8 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		    * Pass transaction ID to refund amount to buyer
 	*/
 	public function process_refund($orderId, $amount = null, $reason = 'refund') {
-		$txt = date('m/d/Y H:i:s') . " > Start > Refund process_refund ({$orderId})";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+		//$this->create_taza_logs("Start > Refund process_refund ({$orderId})");
 		$order = wc_get_order($orderId);
 		$txn_no = get_post_meta($orderId, 'txn_no', true);
 		if (!$order or !$txn_no) {
@@ -281,14 +457,15 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				}
 			}
 		}
-		$txt = date('m/d/Y H:i:s') . " > End > Refund process_refund ({$orderId})";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+		//$this->create_taza_logs("End > Refund process_refund ({$orderId})");
+
 		return true;
 	}
 
 	function webhook() {
-		$txt = date('m/d/Y H:i:s') . " > Start > webhook";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+		//$this->create_taza_logs("Start > webhook");
 
 		header('HTTP/1.1 200 OK');
 		$respnse = json_decode(file_get_contents("php://input"), true);
@@ -360,15 +537,14 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 			);
 			$comment_id = wp_insert_comment($data);
 		}
-		$txt = date('m/d/Y H:i:s') . " > End > webhook";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+		//$this->create_taza_logs("End > webhook");
 		die();
 	}
 
 	public function update_status($post_id) {
 
-		$txt = date('m/d/Y H:i:s') . " > Start > Refund update_status ({$post_id})";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+		//$this->create_taza_logs("Start > Refund update_status ({$post_id})");
 
 		$txn_no = get_post_meta($post_id, 'txn_no', true);
 		$paymentMethod = get_post_meta($post_id, '_payment_method', true);
@@ -389,8 +565,8 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 
 			}
 		}
-		$txt = date('m/d/Y H:i:s') . " > End > Refund update_status ({$post_id}) \n";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+		//$this->create_taza_logs("End > Refund update_status ({$post_id}) \n");
 	}
 
 	/*
@@ -716,8 +892,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	*/
 	public function tcpg_request_apicall($api_url, $api_endpoint, $args, $order_id) {
 
-		$txt = date('m/d/Y H:i:s') . " > Start > Request API Call > tcpg_request_apicall> {$api_url}";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+		//$this->create_taza_logs("Start > Request API Call > tcpg_request_apicall> {$api_url}");
 
 		/*
 			        * generate salt value
@@ -793,8 +968,8 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 
 			$api_array = json_decode(wp_remote_retrieve_body($response));
 		}
-		$txt = date('m/d/Y H:i:s') . " > End > Request apicall \n";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+		//$this->create_taza_logs("End > Request apicall \n");
 		return $api_array;
 	}
 
@@ -806,8 +981,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 			        * generate salt value
 		*/
 
-		$txt = date('m/d/Y H:i:s') . " > Start > Get Invoice Currency {$buyer_country} - {$seller_country}";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+		//$this->create_taza_logs("Start > Get Invoice Currency {$buyer_country} - {$seller_country}");
 
 		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
 		$l = strlen($chars) - 1;
@@ -859,8 +1033,8 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 			$api_array = json_decode(wp_remote_retrieve_body($response));
 		}
 
-		$txt = date('m/d/Y H:i:s') . "get invoice currency {$buyer_country} {$seller_country}";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+		//$this->create_taza_logs("End > Get Invoice Currency {$buyer_country} - {$seller_country}");
+
 		return $api_array;
 	}
 
@@ -921,8 +1095,8 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 			$api_array = json_decode(wp_remote_retrieve_body($response));
 		}
 
-		$txt = date('m/d/Y H:i:s') . " > End Get User \n";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+		//$this->create_taza_logs("End > Get User \n");
+
 		return $api_array;
 	}
 
@@ -983,8 +1157,8 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		} else {
 			$api_array = json_decode(wp_remote_retrieve_body($response));
 		}
-		$txt = date('m/d/Y H:i:s') . " > End > Get User Country Code \n";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+		//$this->create_taza_logs("End > Get User Country Code \n");
 		return $api_array;
 	}
 
@@ -1054,8 +1228,9 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	public function process_payment($order_id) {
 		global $woocommerce, $wpdb;
 
-		$txt = date('m/d/Y H:i:s') . " > Start > Payment process ({$order_id})";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+		//$this->create_taza_logs("Start > Payment process ({$order_id})");
+
+		$getsellerapi = $this->seller_data;
 
 		$order = wc_get_order($order_id);
 		$account_id = "";
@@ -1082,37 +1257,42 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 			}
 
 			if ($sellercount == 1 && $seller_email[0] == $admin_email) {
-				$txt = date('m/d/Y H:i:s') . " > Start > Get User API> process_payment multiseller (seller email)> /v1/user/";
-				@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+				//$this->create_taza_logs("Start > Get User API> process_payment multiseller (seller email)> /v1/user/");
+
 				$getsellerapi = $this->tcpg_request_api_getuser($this->seller_email);
 			} else {
-				$txt = date('m/d/Y H:i:s') . " > Start > Get User API> process_payment multiseller (seller email)> /v1/user/";
-				@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+				//	$this->create_taza_logs("Start > Get User API> process_payment multiseller (seller email)> /v1/user/");
+
 				$getsellerapi = $this->tcpg_request_api_getuser($seller_email[0]);
 			}
 		} else {
-			$txt = date('m/d/Y H:i:s') . " > Start > Get User API> process_payment multiseller (User email)> /v1/user/";
-			@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
-			$getuserapi = $this->tcpg_request_api_getuser($user_email);
-			$txt = date('m/d/Y H:i:s') . " > Start > Get User API> process_payment Single seller (seller email)> /v1/user/";
-			@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
-			$getsellerapi = $this->tcpg_request_api_getuser($this->seller_email);
+
+			/*$this->create_taza_logs("Start > Get User API> process_payment Single seller (User email)> /v1/user/");
+				$getuserapi = $this->tcpg_request_api_getuser($user_email);
+
+				$this->create_taza_logs("Start > Get User API> process_payment Single seller (seller email)> /v1/user/");
+			*/
+
 		}
+/*
+if ($getuserapi->status == 'success') {
+$buyer_country = $getuserapi->data->country_code;
+$buyer_country_name = $getuserapi->data->country;
+} else {
+$buyer_country = $order->get_billing_country();
+$buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
+}*/
 
-		if ($getuserapi->status == 'success') {
-			$buyer_country = $getuserapi->data->country_code;
-			$buyer_country_name = $getuserapi->data->country;
-		} else {
-			$buyer_country = $order->get_billing_country();
-			$buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
-		}
+		$buyer_country = $order->get_billing_country();
+		$buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 
-		$txt = date('m/d/Y H:i:s') . " > Start > Get user country code > process_payment> /v1/metadata/countryconfig";
-		@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+		//$this->create_taza_logs("Start > Get user country code > process_payment> /v1/metadata/countryconfig");
 
-		$countryconfig = $this->tcpg_request_api_countryconfig($getsellerapi->data->country_code);
+		//$countryconfig = $this->tcpg_request_api_countryconfig($getsellerapi->data->country_code);
 
-		if ($countryconfig->status == 'success' && in_array($buyer_country, $countryconfig->data->buyer_countries)) {
+		if ($this->countryconfig->status == 'success' && in_array($buyer_country, $this->countryconfig->data->buyer_countries)) {
 
 			$invoice_currency_check = $this->tcpg_request_api_invoicecurrency($buyer_country, $getsellerapi->data->country_code);
 			$store_currency = get_woocommerce_currency();
@@ -1304,8 +1484,8 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 					$woocommerce->cart->empty_cart();
 
 					update_post_meta($order_id, 'redirect_url', $redirect_url);
-					$txt = date('m/d/Y H:i:s') . " > End > Payment Process ({$order_id}) \n";
-					@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+					//$this->create_taza_logs("End > Payment Process ({$order_id}) \n");
 
 					return array(
 						'result' => 'success',
@@ -1512,7 +1692,7 @@ $getEscrowstate = $this->tcpg_request_api_orderstatus($txn_no);
 			} else {
 				$tablename = $wpdb->prefix . 'tazapay_user';
 				$seller_results = $wpdb->get_results("SELECT * FROM $tablename WHERE email = '" . sanitize_email($selleremail[0]) . "' AND environment = '" . $this->environment . "'");
-				$account_id = $seller_results[0]->account_id;
+				$account_id = isset($seller_results[0]->account_id) ? $seller_results[0]->account_id : '';
 
 				if ($this->tazapay_seller_type == 'multiseller' && $this->tazapay_multi_seller_plugin == 'dokan' && empty($account_id)) {
 					unset($available_gateways['tz_tazapay']);
@@ -1689,12 +1869,12 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways) {
 
 				if ($sellercount == 1) {
 
-					$txt = date('m/d/Y H:i:s') . " > Start > Get User API> tcpg_payment_gateway_disable_tazapay  sellercount==1> /v1/user/";
-					@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+					//	$request_api_call->create_taza_logs("Start > Get User API> tcpg_payment_gateway_disable_tazapay  sellercount==1> /v1/user/");
 
 					$getuserapi = $request_api_call->tcpg_request_api_getuser($seller_email[0]);
-					$txt = date('m/d/Y H:i:s') . " > Start > Get user country code > tcpg_payment_gateway_disable_tazapay> /v1/metadata/countryconfig";
-					@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+					//$request_api_call->create_taza_logs("Start > Get user country code > tcpg_payment_gateway_disable_tazapay> /v1/metadata/countryconfig");
+
 					$countryconfig = $request_api_call->tcpg_request_api_countryconfig($getuserapi->data->country_code);
 
 					if ($countryconfig->status == 'success' && in_array($field_value, $countryconfig->data->buyer_countries)) {
@@ -1721,16 +1901,19 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways) {
 		} else {
 
 			$seller_email = sanitize_email($request_api_call->seller_email);
-			$txt = date('m/d/Y H:i:s') . " > Start > Get User API> tcpg_payment_gateway_disable_tazapay single seller> /v1/user/";
-			@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+			//$request_api_call->create_taza_logs("Start > Get User API> tcpg_payment_gateway_disable_tazapay single seller> /v1/user/");
+
 			$getuserapi = $request_api_call->tcpg_request_api_getuser($seller_email);
-			$txt = date('m/d/Y H:i:s') . " > Start > Get user country code > tcpg_payment_gateway_disable_tazapay> /v1/metadata/countryconfig";
-			@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+			//$request_api_call->create_taza_logs("Start > Get user country code > tcpg_payment_gateway_disable_tazapay> /v1/metadata/countryconfig");
+
 			$countryconfig = $request_api_call->tcpg_request_api_countryconfig($getuserapi->data->country_code);
 
 			if ($countryconfig->status == 'success' && in_array($field_value, $countryconfig->data->buyer_countries)) {
-				$txt = date('m/d/Y H:i:s') . " > Start > Get Currency > tcpg_payment_gateway_disable_tazapay> /v1/metadata/invoicecurrency";
-				@file_put_contents('tazapay_logs.txt', $txt . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+				//	$request_api_call->create_taza_logs("Start > Get Currency > tcpg_payment_gateway_disable_tazapay> /v1/metadata/invoicecurrency");
+
 				$invoice_currency_check = $request_api_call->tcpg_request_api_invoicecurrency($field_value, $getuserapi->data->country_code);
 				$store_currency = get_woocommerce_currency();
 
