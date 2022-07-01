@@ -8,7 +8,7 @@
 
  * Description:       Pay securely with buyer protection.
 
- * Version:           1.3.3
+ * Version:           1.3.4
 
  * Author:            Tazapay
 
@@ -31,6 +31,8 @@ define('TCPG_PUBLIC_ASSETS_DIR', plugins_url('assets/', __FILE__));
 $plugin = plugin_basename(__FILE__);
 
 register_activation_hook(__FILE__, 'tcpg_user_install');
+register_activation_hook(__FILE__, 'tcpg_seller_info_install');
+register_activation_hook(__FILE__, 'tcpg_country_config_install');
 
 
 
@@ -90,6 +92,104 @@ function tcpg_user_install()
 
 }
 
+
+/*
+*Tazapay seller info create table
+*/
+function tcpg_seller_info_install()
+{
+    global $wpdb;
+
+
+
+    $table_name      = $wpdb->prefix . 'tazapay_seller_info';
+
+    $charset_collate = $wpdb->get_charset_collate();
+
+
+    if($wpdb->get_var( "show tables like '$table_name'" ) != $table_name || $wpdb->get_var( "show tables like '$table_name'" ) == $table_name) 
+    {
+        resetTable($table_name);
+        $sql = "CREATE TABLE `". $table_name . "` ( ";
+        $sql .= "  id mediumint(9) NOT NULL AUTO_INCREMENT,
+
+        account_id varchar(255) NOT NULL,
+
+        company_name varchar(255) NULL,
+
+        first_name varchar(255) NOT NULL,
+
+        last_name varchar(255) NOT NULL,
+
+        email varchar(255) NOT NULL,
+
+        country varchar(255) NOT NULL,
+
+        country_code varchar(255) NOT NULL,
+
+        contact_code varchar(255) NULL,
+
+        contact_number varchar(255) NULL,
+
+        customer_id varchar(255) NULL,
+
+        ind_bus_type varchar(255) NOT NULL,
+
+        status varchar(255) NOT NULL,
+
+        PRIMARY KEY  (id)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ; ";
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+    }
+}
+
+
+/*
+*Tazapay seller country config create table
+*/
+function tcpg_country_config_install()
+{
+    global $wpdb;
+
+
+
+    $table_name      = $wpdb->prefix . 'tazapay_seller_country_config';
+
+    $charset_collate = $wpdb->get_charset_collate();
+
+
+    if($wpdb->get_var( "show tables like '$table_name'" ) != $table_name || $wpdb->get_var( "show tables like '$table_name'" ) == $table_name) 
+    {
+        resetTable($table_name);
+        $sql = "CREATE TABLE `". $table_name . "` ( ";
+        $sql .= "  id mediumint(9) NOT NULL AUTO_INCREMENT,
+
+        seller_info_id mediumint(9) NOT NULL,
+
+        market_type varchar(50) NOT NULL,
+
+        country_config_type varchar(50) NOT NULL,
+
+        country_config_code varchar(50) NOT NULL,
+
+        status varchar(50) NOT NULL,
+
+        PRIMARY KEY  (id)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ; ";
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+    }
+}
+
+/*
+* This function will work for deleting table 
+*/
+function resetTable($table_name)
+{
+    global $wpdb;
+    $sql        = "DROP TABLE IF EXISTS $table_name";
+    $wpdb->query( $sql );
+    delete_option( 'wp_install_uninstall_config' );
+}
 
 
 /*
