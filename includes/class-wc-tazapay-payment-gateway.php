@@ -469,6 +469,18 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 
 		header('HTTP/1.1 200 OK');
 		$respnse = json_decode(file_get_contents("php://input"), true);
+
+		if ($respnse['state'] == 'Payment_Received')
+		{
+			$txn_no = $respnse['txn_no'];
+			$post_id = tazapay_post_id_by_meta_key_and_value('txn_no', $txn_no);
+			$my_post = array(
+				'ID' => $post_id,
+				'post_status' => 'wc-processing',
+			);
+			wp_update_post($my_post);
+		}
+		
 		if ($respnse['status'] == 'requested') {
 			$reference_id = $respnse['reference_id'];
 			$post_id = tazapay_post_id_by_meta_key_and_value('reference_id', $reference_id);
@@ -1445,7 +1457,7 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 					"percentage" => 0,
 					"complete_url" => $this->get_return_url($order),
 					"error_url" => $this->get_return_url($order),
-					"callback_url" => "",
+					"callback_url" => $this->callBackUrl,
 				);
 
 				$payment_api_endpoint = "/v1/session/payment";
