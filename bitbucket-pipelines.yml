@@ -1,0 +1,13 @@
+image: atlassian/default-image:3
+
+pipelines:
+    branches:
+      master:
+        - step:
+           script:
+             - git remote add sync git@github.com:tazapay/magento-plugin.git
+             - git checkout master
+             - git pull    
+             - git rm bitbucket-pipelines.yml
+             - git commit -am "sync with github"
+             - git push -f sync master
