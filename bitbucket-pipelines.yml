@@ -5,7 +5,7 @@ pipelines:
       master:
         - step:
            script:
-             - git remote add sync git@github.com:tazapay/magento-plugin.git
+             - git remote add sync git@github.com:tazapay/woocommerce-plugin.git
              - git checkout master
              - git pull    
              - git rm bitbucket-pipelines.yml
