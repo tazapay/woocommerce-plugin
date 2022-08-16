@@ -1322,44 +1322,67 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 
 		if ($invoice_currency == true) {
 
-			$args = array(
-				"email" => $order->get_billing_email(),
-				"first_name" => $order->get_billing_first_name(),
-				"last_name" => $order->get_billing_last_name(),
-				"contact_code" => $phoneCode,
-				"contact_number" => $order->get_billing_phone(),
-				"country" => $order->get_billing_country(),
-				"ind_bus_type" => "Individual",
+			$seller_id = isset($getsellerapi->data->id) ? sanitize_text_field($getsellerapi->data->id) : '';
+
+			foreach (WC()->cart->get_cart() as $cart_item) {
+				$item_name = $cart_item['data']->get_title();
+				$quantity = $cart_item['quantity'];
+				$items[] = $quantity . ' x ' . $item_name;
+			}
+
+			$listofitems = implode(', ', $items);
+			$description = get_bloginfo('name') . ' : ' . $listofitems;
+			$checkoutArgs = array(
+				"buyer" => array(
+					"email" => $order->get_billing_email(),
+					"country" => $order->get_billing_country(),
+					"ind_bus_type" => "Individual",
+					"first_name" => $order->get_billing_first_name(),
+					"last_name" => $order->get_billing_last_name(),
+					"contact_code" => $phoneCode,
+					"contact_number" => $order->get_billing_phone(),
+				),
+				"seller_id" => $seller_id,
+				"fee_paid_by" => "buyer",
+				"invoice_currency" => get_option('woocommerce_currency'),
+				"invoice_amount" => $order->get_total(),
+				"txn_description" => $description,
+				"callback_url" => $this->callBackUrl,
+				"complete_url" => $this->get_return_url($order),
+				"error_url" => $this->get_return_url($order),
 			);
-			$api_endpoint = "/v1/user";
-			$api_url = $this->base_api_url . '/v1/user';
-			$result = $this->tcpg_request_apicall($api_url, $api_endpoint, $args, $order_id);
+			$api_endpoint = "/v1/checkout";
+			$api_url = $this->base_api_url . '/v1/checkout';
+			$result = $this->tcpg_request_apicall($api_url, $api_endpoint, $checkoutArgs, $order_id);
+
 
 			if ($result->status == 'error') {
-
-				$create_user_error_msg = "";
-				$create_user_error_msg = esc_html($result->message);
-				$create_user_error_msg .= ", TazaPay Email : " . $order->get_billing_email();
-
+				$payment_msg = "";
+				$payment_msg = $result->message;
 				foreach ($result->errors as $key => $error) {
+
 					if (isset($error->code)) {
-						$create_user_error_msg .= ", code: " . esc_html($error->code);
+						$payment_msg .= ", code: " . esc_html($error->code);
 					}
 					if (isset($error->message)) {
-						$create_user_error_msg .= ", Message: " . esc_html($error->message);
+						$payment_msg .= ", Message: " . esc_html($error->message);
 					}
 					if (isset($error->remarks)) {
-						$create_user_error_msg .= ", Remarks: " . esc_html($error->remarks);
+						$payment_msg .= ", Remarks: " . esc_html($error->remarks);
 					}
 				}
-				$order->add_order_note($create_user_error_msg, true);
+				$order->add_order_note($payment_msg, true);
 
-				wc_add_notice($error->message, 'error');
+				return array(
+					'result' => 'success',
+					'redirect' => $this->get_return_url($order),
+				);
 			}
+
 			if ($result->status == 'success') {
 
 				$tablename = $wpdb->prefix . 'tazapay_user';
-				$account_id = isset($result->data->account_id) ? sanitize_text_field($result->data->account_id) : '';
+				$account_id = isset($result->data->buyer->id) ? sanitize_text_field($result->data->buyer->id) : '';
 
 				$user_results = $wpdb->get_results("SELECT account_id FROM $tablename WHERE email = '" . $order->get_billing_email() . "' AND environment = '" . $this->environment . "'");
 
@@ -1385,79 +1408,30 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 						array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
 					);
 				}
-			}
-		}
 
-		if (!empty($account_id) && $invoice_currency == true) {
+				update_post_meta($order_id, 'account_id', $account_id);
+				update_user_meta($userId, 'account_id', $account_id);
+				update_user_meta($userId, 'first_name', $order->get_billing_first_name());
+				update_user_meta($userId, 'last_name', $order->get_billing_last_name());
+				update_user_meta($userId, 'contact_code', $phoneCode);
+				update_user_meta($userId, 'contact_number', $order->get_billing_phone());
+				update_user_meta($userId, 'ind_bus_type', 'Individual');
+				update_user_meta($userId, 'created', current_time('mysql'));
+				update_user_meta($userId, 'environment', $this->environment);
+				update_post_meta($order_id, 'txn_no', $result->data->txn_no);
 
-			$seller_id = isset($getsellerapi->data->id) ? sanitize_text_field($getsellerapi->data->id) : '';
+				$redirect_url = $result->data->redirect_url;
+				$order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
+				$order->reduce_order_stock();
+				$woocommerce->cart->empty_cart();
 
-			foreach (WC()->cart->get_cart() as $cart_item) {
-				$item_name = $cart_item['data']->get_title();
-				$quantity = $cart_item['quantity'];
-				$items[] = $quantity . ' x ' . $item_name;
-			}
+				update_post_meta($order_id, 'redirect_url', $redirect_url);
 
-			$listofitems = implode(', ', $items);
-			$description = get_bloginfo('name') . ' : ' . $listofitems;
+				//$this->create_taza_logs("End > Payment Process ({$order_id}) \n");
 
-			$argsEscrow = array(
-				"txn_type" => $this->txn_type_escrow,
-				"transaction_source" => "woocommerce",
-				"release_mechanism" => $this->release_mechanism,
-				"initiated_by" => $seller_id,
-				"buyer_id" => $account_id,
-				"seller_id" => $seller_id,
-				"txn_description" => $description,
-				"invoice_currency" => get_option('woocommerce_currency'),
-				"invoice_amount" => $order->get_total(),
-			);
-
-			update_post_meta($order_id, 'account_id', $account_id);
-			update_user_meta($userId, 'account_id', $account_id);
-			update_user_meta($userId, 'first_name', $order->get_billing_first_name());
-			update_user_meta($userId, 'last_name', $order->get_billing_last_name());
-			update_user_meta($userId, 'contact_code', $phoneCode);
-			update_user_meta($userId, 'contact_number', $order->get_billing_phone());
-			update_user_meta($userId, 'ind_bus_type', 'Individual');
-			update_user_meta($userId, 'created', current_time('mysql'));
-			update_user_meta($userId, 'environment', $this->environment);
-
-			$escrow_api_endpoint = "/v1/escrow";
-			$api_url = $this->base_api_url . '/v1/escrow';
-			$result_escrow = $this->tcpg_request_apicall($api_url, $escrow_api_endpoint, $argsEscrow, $order_id);
-
-			if ($result_escrow->status == 'error') {
-
-				$create_escrow_msg = "";
-				$create_escrow_msg = $result_escrow->message;
-
-				foreach ($result_escrow->errors as $key => $error) {
-
-					if (isset($error->code)) {
-						$create_escrow_msg .= ", code: " . esc_html($error->code);
-					}
-					if (isset($error->message)) {
-						$create_escrow_msg .= ", Message: " . esc_html($error->message);
-					}
-					if (isset($error->remarks)) {
-						$create_escrow_msg .= ", Remarks: " . esc_html($error->remarks);
-					}
-				}
-				$order->add_order_note($create_escrow_msg, true);
-				wc_add_notice($error->message, 'error');
-			}
-
-			if ($result_escrow->status == 'success') {
-
-				update_post_meta($order_id, 'txn_no', $result_escrow->data->txn_no);
-
-				$argsPayment = array(
-					"txn_no" => $result_escrow->data->txn_no,
-					"percentage" => 0,
-					"complete_url" => $this->get_return_url($order),
-					"error_url" => $this->get_return_url($order),
-					"callback_url" => $this->callBackUrl,
+				return array(
+					'result' => 'success',
+					'redirect' => esc_url($redirect_url),
 				);
 
 				$payment_api_endpoint = "/v1/session/payment";
@@ -1505,11 +1479,6 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 					);
 				}
 			}
-		} else {
-			// return array(
-			//     'result' => 'success',
-			//     'redirect' => $this->get_return_url($order)
-			// );
 		}
 	}
 
