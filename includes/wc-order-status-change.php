@@ -7,19 +7,8 @@ function tcpg_tcpg_request_api_orderstatus($txn_no)
 
   $woocommerce_tz_tazapay_settings = get_option('woocommerce_tz_tazapay_settings');
 
-  /*
-  * generate salt value
-  */
-  $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-  $l = strlen($chars) - 1;
-  $salt = '';
-  for ($i = 0; $i < 8; ++$i) {
-    $salt .= $chars[rand(0, $l)];
-  }
-
   $method = "GET";
   $APIEndpoint = "/v1/escrow/" . $txn_no;
-  $timestamp = time();
   $apiKey     = $woocommerce_tz_tazapay_settings['sandboxmode'] ? esc_html($woocommerce_tz_tazapay_settings['sandbox_api_key']) : esc_html($woocommerce_tz_tazapay_settings['live_api_key']);
   $apiSecret  = $woocommerce_tz_tazapay_settings['sandboxmode'] ? esc_html($woocommerce_tz_tazapay_settings['sandbox_api_secret_key']) : esc_html($woocommerce_tz_tazapay_settings['live_api_secret_key']);
 
@@ -29,20 +18,9 @@ function tcpg_tcpg_request_api_orderstatus($txn_no)
     $api_url = 'https://api.tazapay.com';
   }
 
-  /*
-  * generate to_sign
-  * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-  */
-  $to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
+  $basic_auth = $apiKey . ':' . $apiSecret;
 
-  /*
-  * generate signature
-  * $hmacSHA256 is generate hmacSHA256
-  * $signature is convert hmacSHA256 into base64 encode
-  * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-  */
-  $hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-  $signature  = base64_encode($hmacSHA256);
+  $authentication = "Basic " . base64_encode($basic_auth);
 
   $response = wp_remote_post(
     esc_url_raw( $api_url ) . $APIEndpoint,
@@ -50,10 +28,7 @@ function tcpg_tcpg_request_api_orderstatus($txn_no)
       'method'      => 'GET',
       'sslverify'   => false,
       'headers'     => array(
-        'accesskey' => $apiKey,
-        'salt' => $salt,
-        'signature' => $signature,
-        'timestamp' => $timestamp,
+				'Authorization' => $authentication,
         'Content-Type' => 'application/json'
       )
     )

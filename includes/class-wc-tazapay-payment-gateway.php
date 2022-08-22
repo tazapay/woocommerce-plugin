@@ -584,38 +584,24 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	/*
 		    * Get escrow status by txn_no
 	*/
-	public function tcpg_request_api_refundstatus($txn_no) {
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
 
-		$method = "GET";
-		$APIEndpoint = "/v1/payment/refund/status";
-		$timestamp = time();
+	public function tcpg_authentication(){
+
 		$apiKey = $this->live_api_key;
 		$apiSecret = $this->live_api_secret_key;
+		$basic_auth = $apiKey . ':' . $apiSecret;
+		$authentication = "Basic " . base64_encode($basic_auth);
+
+		return $authentication;
+	}
+
+	public function tcpg_request_api_refundstatus($txn_no) {
+		
+		$method = "GET";
+		$APIEndpoint = "/v1/payment/refund/status";
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint . '?txn_no=' . $txn_no,
@@ -623,10 +609,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -904,39 +887,10 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	*/
 	public function tcpg_request_apicall($api_url, $api_endpoint, $args, $order_id) {
 
-		//$this->create_taza_logs("Start > Request API Call > tcpg_request_apicall> {$api_url}");
-
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
 		$method = "POST";
 		$APIEndpoint = $api_endpoint;
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$json = json_encode($args);
 		$json = str_replace('"invoice_amount":"' . $args['invoice_amount'] . '"', '"invoice_amount":' . $args['invoice_amount'] . '', $json);
@@ -949,10 +903,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'httpversion' => '1.0',
 				'blocking' => true,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 				'body' => $json,
@@ -989,40 +940,12 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		    * Get invoice currency api
 	*/
 	public function tcpg_request_api_invoicecurrency($buyer_country, $seller_country) {
-		/*
-			        * generate salt value
-		*/
-
-		//$this->create_taza_logs("Start > Get Invoice Currency {$buyer_country} - {$seller_country}");
-
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
+		
 		$method = "GET";
 		$APIEndpoint = "/v1/metadata/invoicecurrency";
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint . '?buyer_country=' . $buyer_country . '&seller_country=' . $seller_country,
@@ -1030,10 +953,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -1054,37 +974,12 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		    * Get user api
 	*/
 	public function tcpg_request_api_getuser($emailoruuid) {
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
+		
 		$method = "GET";
 		$APIEndpoint = "/v1/user/" . $emailoruuid;
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint,
@@ -1092,10 +987,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -1117,37 +1009,11 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	*/
 	public function tcpg_request_api_countryconfig($country_code) {
 
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
 		$method = "GET";
 		$APIEndpoint = "/v1/metadata/countryconfig";
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint . '?country=' . $country_code,
@@ -1155,10 +1021,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -1178,37 +1041,12 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		    * Get escrow status by txn_no
 	*/
 	public function tcpg_request_api_orderstatus($txn_no) {
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
+	
 		$method = "GET";
 		$APIEndpoint = "/v1/escrow/" . $txn_no;
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint,
@@ -1216,10 +1054,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
