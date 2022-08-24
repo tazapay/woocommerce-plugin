@@ -1653,9 +1653,8 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways) {
 	$buyer_country = "";
 	$request_api_call = new TCPG_Gateway();
 	$payment_id = 'tz_tazapay';
-	$field_key = 'billing_country';  
-	/*$field_value = WC()->session->get('field_' . $field_key);*/
-	$field_value =WC()->customer->get_billing_country();
+	$field_key = 'billing_country';
+	$field_value = WC()->session->get('field_' . $field_key);
 	$site_currency = get_option('woocommerce_currency');
 
 	if (isset($available_gateways[$payment_id]) && !empty($field_value)) {
