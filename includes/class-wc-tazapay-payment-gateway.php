@@ -1190,28 +1190,15 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 			$api_url = $this->base_api_url . '/v1/checkout';
 			$result = $this->tcpg_request_apicall($api_url, $api_endpoint, $checkoutArgs, $order_id);
 
-
 			if ($result->status == 'error') {
 				$payment_msg = "";
-				$payment_msg = $result->message;
 				foreach ($result->errors as $key => $error) {
-
-					if (isset($error->code)) {
-						$payment_msg .= ", code: " . esc_html($error->code);
-					}
 					if (isset($error->message)) {
-						$payment_msg .= ", Message: " . esc_html($error->message);
-					}
-					if (isset($error->remarks)) {
-						$payment_msg .= ", Remarks: " . esc_html($error->remarks);
+						$payment_msg .= " " . esc_html($error->message);
 					}
 				}
 				$order->add_order_note($payment_msg, true);
-
-				return array(
-					'result' => 'success',
-					'redirect' => $this->get_return_url($order),
-				);
+				return wc_add_notice($payment_msg, 'error');
 			}
 
 			if ($result->status == 'success') {
