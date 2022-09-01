@@ -258,33 +258,21 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		$countries = $countries_obj->__get('countries');
 		$text1 = __('Production mode is used for LIVE transactions, Sandbox mode can be used for testing', 'wc-tp-payment-gateway');
 		$text2 = __('Request Credentials', 'wc-tp-payment-gateway');
-		$text5 = 'Please input the Sandbox API Key received from Tazapay';
-		$text6 = 'Please input the Sandbox API Secret Key received from Tazapay';
-		$text7 = 'Please input the Production API Key received from Tazapay';
-		$text8 = 'Please input the Production API Secret Key received from Tazapay';
+		$text5 = 'Please input the Sandbox API Key / API Secret Key received from Tazapay';
+		$text6 = 'Please input the Production API Key / API Secret Key received from Tazapay';
 
 		if ($this->get_option('sandboxmode') === 'sandbox') {
-			$wrongApiKey = $this->isRegistered("1101", "Wrong API Key. $text5");
+			$wrongApiKey = $this->isRegistered("1100", "Wrong API Key / API Secret Key . $text5");
 			if (!empty($wrongApiKey)) {
 				$text5 = __('<strong style="color:red;">' . $wrongApiKey . '</strong>', 'wc-tp-payment-gateway');
 			}
-			$wrongApiSecret = $this->isRegistered("1102", "Wrong API Secret Key . $text6");
-			if (!empty($wrongApiSecret)) {
-				$text6 = __('<strong style="color:red;">' . $wrongApiSecret . '</strong>', 'wc-tp-payment-gateway');
-			}
-
 			$text3 = __('Request Sandbox credentials for accepting payments via Tazapay. Signup now and go to \'Request API Key\'', 'wc-tp-payment-gateway');
 			$signupurl = 'https://sandbox.tazapay.com/signup';
 		} else {
-			$wrongApiKey = $this->isRegistered("1101", "Wrong API Key. $text7");
+			$wrongApiKey = $this->isRegistered("1100", "Wrong API Key / API Secret Key . $text6");
 			if (!empty($wrongApiKey)) {
-				$text7 = __('<strong style="color:red;">' . $wrongApiKey . '</strong>', 'wc-tp-payment-gateway');
+				$text6 = __('<strong style="color:red;">' . $wrongApiKey . '</strong>', 'wc-tp-payment-gateway');
 			}
-			$wrongApiSecret = $this->isRegistered("1102", "Wrong API Secret Key . $text8");
-			if (!empty($wrongApiSecret)) {
-				$text8 = __('<strong style="color:red;">' . $wrongApiSecret . '</strong>', 'wc-tp-payment-gateway');
-			}
-
 			$text3 = __('Request Production credentials for accepting payments via Tazapay. Signup now and go to \'Request API Key\'', 'wc-tp-payment-gateway');
 			$signupurl = 'https://app.tazapay.com/signup';
 		}
@@ -343,19 +331,19 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 			'sandbox_api_secret_key' => array(
 				'title' => __('Sandbox API Secret Key', 'wc-tp-payment-gateway'),
 				'type' => 'password',
-				'description' => __($text6, 'wc-tp-payment-gateway'),
+				'description' => __($text5, 'wc-tp-payment-gateway'),
 				'class' => 'tazapay-sandbox',
 			),
 			'live_api_key' => array(
 				'title' => __('Production API Key', 'wc-tp-payment-gateway'),
 				'type' => 'password',
-				'description' => __($text7, 'wc-tp-payment-gateway'),
+				'description' => __($text6, 'wc-tp-payment-gateway'),
 				'class' => 'tazapay-production',
 			),
 			'live_api_secret_key' => array(
 				'title' => __('Production API Secret Key', 'wc-tp-payment-gateway'),
 				'type' => 'password',
-				'description' => __($text8, 'wc-tp-payment-gateway'),
+				'description' => __($text6, 'wc-tp-payment-gateway'),
 				'class' => 'tazapay-production',
 			),
 			'seller_email' => array(
@@ -1546,8 +1534,7 @@ $getEscrowstate = $this->tcpg_request_api_orderstatus($txn_no);
 
 	//This is checking that is this email id of seller known the user of tazapay
 	public function isRegistered($errorcode, $message) {
-		//$isSellerRegistered = $this->tcpg_request_api_getuser($this->get_option('seller_email'));
-		$isSellerRegistered = $this->seller_data;
+		$isSellerRegistered = $this->tcpg_request_api_getuser($this->seller_email);
 		if (isset($isSellerRegistered->errors[0]->code)) {
 			if ($isSellerRegistered->errors[0]->code == $errorcode) {
 				return $message;
