@@ -258,33 +258,21 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		$countries = $countries_obj->__get('countries');
 		$text1 = __('Production mode is used for LIVE transactions, Sandbox mode can be used for testing', 'wc-tp-payment-gateway');
 		$text2 = __('Request Credentials', 'wc-tp-payment-gateway');
-		$text5 = 'Please input the Sandbox API Key received from Tazapay';
-		$text6 = 'Please input the Sandbox API Secret Key received from Tazapay';
-		$text7 = 'Please input the Production API Key received from Tazapay';
-		$text8 = 'Please input the Production API Secret Key received from Tazapay';
+		$text5 = 'Please input the Sandbox API Key / API Secret Key received from Tazapay';
+		$text6 = 'Please input the Production API Key / API Secret Key received from Tazapay';
 
 		if ($this->get_option('sandboxmode') === 'sandbox') {
-			$wrongApiKey = $this->isRegistered("1101", "Wrong API Key. $text5");
+			$wrongApiKey = $this->isRegistered("1100", "Wrong API Key / API Secret Key . $text5");
 			if (!empty($wrongApiKey)) {
 				$text5 = __('<strong style="color:red;">' . $wrongApiKey . '</strong>', 'wc-tp-payment-gateway');
 			}
-			$wrongApiSecret = $this->isRegistered("1102", "Wrong API Secret Key . $text6");
-			if (!empty($wrongApiSecret)) {
-				$text6 = __('<strong style="color:red;">' . $wrongApiSecret . '</strong>', 'wc-tp-payment-gateway');
-			}
-
 			$text3 = __('Request Sandbox credentials for accepting payments via Tazapay. Signup now and go to \'Request API Key\'', 'wc-tp-payment-gateway');
 			$signupurl = 'https://sandbox.tazapay.com/signup';
 		} else {
-			$wrongApiKey = $this->isRegistered("1101", "Wrong API Key. $text7");
+			$wrongApiKey = $this->isRegistered("1100", "Wrong API Key / API Secret Key . $text6");
 			if (!empty($wrongApiKey)) {
-				$text7 = __('<strong style="color:red;">' . $wrongApiKey . '</strong>', 'wc-tp-payment-gateway');
+				$text6 = __('<strong style="color:red;">' . $wrongApiKey . '</strong>', 'wc-tp-payment-gateway');
 			}
-			$wrongApiSecret = $this->isRegistered("1102", "Wrong API Secret Key . $text8");
-			if (!empty($wrongApiSecret)) {
-				$text8 = __('<strong style="color:red;">' . $wrongApiSecret . '</strong>', 'wc-tp-payment-gateway');
-			}
-
 			$text3 = __('Request Production credentials for accepting payments via Tazapay. Signup now and go to \'Request API Key\'', 'wc-tp-payment-gateway');
 			$signupurl = 'https://app.tazapay.com/signup';
 		}
@@ -343,19 +331,19 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 			'sandbox_api_secret_key' => array(
 				'title' => __('Sandbox API Secret Key', 'wc-tp-payment-gateway'),
 				'type' => 'password',
-				'description' => __($text6, 'wc-tp-payment-gateway'),
+				'description' => __($text5, 'wc-tp-payment-gateway'),
 				'class' => 'tazapay-sandbox',
 			),
 			'live_api_key' => array(
 				'title' => __('Production API Key', 'wc-tp-payment-gateway'),
 				'type' => 'password',
-				'description' => __($text7, 'wc-tp-payment-gateway'),
+				'description' => __($text6, 'wc-tp-payment-gateway'),
 				'class' => 'tazapay-production',
 			),
 			'live_api_secret_key' => array(
 				'title' => __('Production API Secret Key', 'wc-tp-payment-gateway'),
 				'type' => 'password',
-				'description' => __($text8, 'wc-tp-payment-gateway'),
+				'description' => __($text6, 'wc-tp-payment-gateway'),
 				'class' => 'tazapay-production',
 			),
 			'seller_email' => array(
@@ -584,38 +572,24 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	/*
 		    * Get escrow status by txn_no
 	*/
-	public function tcpg_request_api_refundstatus($txn_no) {
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
 
-		$method = "GET";
-		$APIEndpoint = "/v1/payment/refund/status";
-		$timestamp = time();
+	public function tcpg_authentication(){
+
 		$apiKey = $this->live_api_key;
 		$apiSecret = $this->live_api_secret_key;
+		$basic_auth = $apiKey . ':' . $apiSecret;
+		$authentication = "Basic " . base64_encode($basic_auth);
+
+		return $authentication;
+	}
+
+	public function tcpg_request_api_refundstatus($txn_no) {
+		
+		$method = "GET";
+		$APIEndpoint = "/v1/payment/refund/status";
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint . '?txn_no=' . $txn_no,
@@ -623,10 +597,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -904,39 +875,10 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	*/
 	public function tcpg_request_apicall($api_url, $api_endpoint, $args, $order_id) {
 
-		//$this->create_taza_logs("Start > Request API Call > tcpg_request_apicall> {$api_url}");
-
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
 		$method = "POST";
 		$APIEndpoint = $api_endpoint;
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$json = json_encode($args);
 		$json = str_replace('"invoice_amount":"' . $args['invoice_amount'] . '"', '"invoice_amount":' . $args['invoice_amount'] . '', $json);
@@ -949,10 +891,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'httpversion' => '1.0',
 				'blocking' => true,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 				'body' => $json,
@@ -989,40 +928,12 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		    * Get invoice currency api
 	*/
 	public function tcpg_request_api_invoicecurrency($buyer_country, $seller_country) {
-		/*
-			        * generate salt value
-		*/
-
-		//$this->create_taza_logs("Start > Get Invoice Currency {$buyer_country} - {$seller_country}");
-
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
+		
 		$method = "GET";
 		$APIEndpoint = "/v1/metadata/invoicecurrency";
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint . '?buyer_country=' . $buyer_country . '&seller_country=' . $seller_country,
@@ -1030,10 +941,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -1054,37 +962,12 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		    * Get user api
 	*/
 	public function tcpg_request_api_getuser($emailoruuid) {
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
+		
 		$method = "GET";
 		$APIEndpoint = "/v1/user/" . $emailoruuid;
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint,
@@ -1092,10 +975,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -1117,37 +997,11 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 	*/
 	public function tcpg_request_api_countryconfig($country_code) {
 
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
 		$method = "GET";
 		$APIEndpoint = "/v1/metadata/countryconfig";
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint . '?country=' . $country_code,
@@ -1155,10 +1009,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -1178,37 +1029,12 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 		    * Get escrow status by txn_no
 	*/
 	public function tcpg_request_api_orderstatus($txn_no) {
-		/*
-			        * generate salt value
-		*/
-		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+';
-		$l = strlen($chars) - 1;
-		$salt = '';
-		for ($i = 0; $i < 8; ++$i) {
-			$salt .= $chars[rand(0, $l)];
-		}
-
+	
 		$method = "GET";
 		$APIEndpoint = "/v1/escrow/" . $txn_no;
-		$timestamp = time();
-		$apiKey = $this->live_api_key;
-		$apiSecret = $this->live_api_secret_key;
 		$api_url = $this->base_api_url;
 
-		/*
-			        * generate to_sign
-			        * to_sign = toUpperCase(Method) + Api-Endpoint + Salt + Timestamp + API-Key + API-Secret
-		*/
-		$to_sign = $method . $APIEndpoint . $salt . $timestamp . $apiKey . $apiSecret;
-
-		/*
-			        * generate signature
-			        * $hmacSHA256 is generate hmacSHA256
-			        * $signature is convert hmacSHA256 into base64 encode
-			        * in document: signature = Base64(hmacSHA256(to_sign, API-Secret))
-		*/
-		$hmacSHA256 = hash_hmac('sha256', $to_sign, $apiSecret);
-		$signature = base64_encode($hmacSHA256);
+		$authentication = $this->tcpg_authentication();
 
 		$response = wp_remote_post(
 			esc_url_raw($api_url) . $APIEndpoint,
@@ -1216,10 +1042,7 @@ class TCPG_Gateway extends WC_Payment_Gateway {
 				'method' => 'GET',
 				'sslverify' => false,
 				'headers' => array(
-					'accesskey' => $apiKey,
-					'salt' => $salt,
-					'signature' => $signature,
-					'timestamp' => $timestamp,
+					'Authorization' => $authentication,
 					'Content-Type' => 'application/json',
 				),
 			)
@@ -1322,44 +1145,54 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 
 		if ($invoice_currency == true) {
 
-			$args = array(
-				"email" => $order->get_billing_email(),
-				"first_name" => $order->get_billing_first_name(),
-				"last_name" => $order->get_billing_last_name(),
-				"contact_code" => $phoneCode,
-				"contact_number" => $order->get_billing_phone(),
-				"country" => $order->get_billing_country(),
-				"ind_bus_type" => "Individual",
+			$seller_id = isset($getsellerapi->data->id) ? sanitize_text_field($getsellerapi->data->id) : '';
+
+			foreach (WC()->cart->get_cart() as $cart_item) {
+				$item_name = $cart_item['data']->get_title();
+				$quantity = $cart_item['quantity'];
+				$items[] = $quantity . ' x ' . $item_name;
+			}
+
+			$listofitems = implode(', ', $items);
+			$description = get_bloginfo('name') . ' : ' . $listofitems;
+			$checkoutArgs = array(
+				"buyer" => array(
+					"email" => $order->get_billing_email(),
+					"country" => $order->get_billing_country(),
+					"ind_bus_type" => "Individual",
+					"first_name" => $order->get_billing_first_name(),
+					"last_name" => $order->get_billing_last_name(),
+					"contact_code" => $phoneCode,
+					"contact_number" => $order->get_billing_phone(),
+				),
+				"seller_id" => $seller_id,
+				"fee_paid_by" => "buyer",
+				"invoice_currency" => get_option('woocommerce_currency'),
+				"invoice_amount" => $order->get_total(),
+				"txn_description" => $description,
+				"callback_url" => $this->callBackUrl,
+				"complete_url" => $this->get_return_url($order),
+				"error_url" => $this->get_return_url($order),
 			);
-			$api_endpoint = "/v1/user";
-			$api_url = $this->base_api_url . '/v1/user';
-			$result = $this->tcpg_request_apicall($api_url, $api_endpoint, $args, $order_id);
+			$api_endpoint = "/v1/checkout";
+			$api_url = $this->base_api_url . '/v1/checkout';
+			$result = $this->tcpg_request_apicall($api_url, $api_endpoint, $checkoutArgs, $order_id);
 
 			if ($result->status == 'error') {
-
-				$create_user_error_msg = "";
-				$create_user_error_msg = esc_html($result->message);
-				$create_user_error_msg .= ", TazaPay Email : " . $order->get_billing_email();
-
+				$payment_msg = "";
 				foreach ($result->errors as $key => $error) {
-					if (isset($error->code)) {
-						$create_user_error_msg .= ", code: " . esc_html($error->code);
-					}
 					if (isset($error->message)) {
-						$create_user_error_msg .= ", Message: " . esc_html($error->message);
-					}
-					if (isset($error->remarks)) {
-						$create_user_error_msg .= ", Remarks: " . esc_html($error->remarks);
+						$payment_msg .= " " . esc_html($error->message);
 					}
 				}
-				$order->add_order_note($create_user_error_msg, true);
-
-				wc_add_notice($error->message, 'error');
+				$order->add_order_note($payment_msg, true);
+				return wc_add_notice($payment_msg, 'error');
 			}
+
 			if ($result->status == 'success') {
 
 				$tablename = $wpdb->prefix . 'tazapay_user';
-				$account_id = isset($result->data->account_id) ? sanitize_text_field($result->data->account_id) : '';
+				$account_id = isset($result->data->buyer->id) ? sanitize_text_field($result->data->buyer->id) : '';
 
 				$user_results = $wpdb->get_results("SELECT account_id FROM $tablename WHERE email = '" . $order->get_billing_email() . "' AND environment = '" . $this->environment . "'");
 
@@ -1385,79 +1218,30 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 						array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
 					);
 				}
-			}
-		}
 
-		if (!empty($account_id) && $invoice_currency == true) {
+				update_post_meta($order_id, 'account_id', $account_id);
+				update_user_meta($userId, 'account_id', $account_id);
+				update_user_meta($userId, 'first_name', $order->get_billing_first_name());
+				update_user_meta($userId, 'last_name', $order->get_billing_last_name());
+				update_user_meta($userId, 'contact_code', $phoneCode);
+				update_user_meta($userId, 'contact_number', $order->get_billing_phone());
+				update_user_meta($userId, 'ind_bus_type', 'Individual');
+				update_user_meta($userId, 'created', current_time('mysql'));
+				update_user_meta($userId, 'environment', $this->environment);
+				update_post_meta($order_id, 'txn_no', $result->data->txn_no);
 
-			$seller_id = isset($getsellerapi->data->id) ? sanitize_text_field($getsellerapi->data->id) : '';
+				$redirect_url = $result->data->redirect_url;
+				$order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
+				$order->reduce_order_stock();
+				$woocommerce->cart->empty_cart();
 
-			foreach (WC()->cart->get_cart() as $cart_item) {
-				$item_name = $cart_item['data']->get_title();
-				$quantity = $cart_item['quantity'];
-				$items[] = $quantity . ' x ' . $item_name;
-			}
+				update_post_meta($order_id, 'redirect_url', $redirect_url);
 
-			$listofitems = implode(', ', $items);
-			$description = get_bloginfo('name') . ' : ' . $listofitems;
+				//$this->create_taza_logs("End > Payment Process ({$order_id}) \n");
 
-			$argsEscrow = array(
-				"txn_type" => $this->txn_type_escrow,
-				"transaction_source" => "woocommerce",
-				"release_mechanism" => $this->release_mechanism,
-				"initiated_by" => $seller_id,
-				"buyer_id" => $account_id,
-				"seller_id" => $seller_id,
-				"txn_description" => $description,
-				"invoice_currency" => get_option('woocommerce_currency'),
-				"invoice_amount" => $order->get_total(),
-			);
-
-			update_post_meta($order_id, 'account_id', $account_id);
-			update_user_meta($userId, 'account_id', $account_id);
-			update_user_meta($userId, 'first_name', $order->get_billing_first_name());
-			update_user_meta($userId, 'last_name', $order->get_billing_last_name());
-			update_user_meta($userId, 'contact_code', $phoneCode);
-			update_user_meta($userId, 'contact_number', $order->get_billing_phone());
-			update_user_meta($userId, 'ind_bus_type', 'Individual');
-			update_user_meta($userId, 'created', current_time('mysql'));
-			update_user_meta($userId, 'environment', $this->environment);
-
-			$escrow_api_endpoint = "/v1/escrow";
-			$api_url = $this->base_api_url . '/v1/escrow';
-			$result_escrow = $this->tcpg_request_apicall($api_url, $escrow_api_endpoint, $argsEscrow, $order_id);
-
-			if ($result_escrow->status == 'error') {
-
-				$create_escrow_msg = "";
-				$create_escrow_msg = $result_escrow->message;
-
-				foreach ($result_escrow->errors as $key => $error) {
-
-					if (isset($error->code)) {
-						$create_escrow_msg .= ", code: " . esc_html($error->code);
-					}
-					if (isset($error->message)) {
-						$create_escrow_msg .= ", Message: " . esc_html($error->message);
-					}
-					if (isset($error->remarks)) {
-						$create_escrow_msg .= ", Remarks: " . esc_html($error->remarks);
-					}
-				}
-				$order->add_order_note($create_escrow_msg, true);
-				wc_add_notice($error->message, 'error');
-			}
-
-			if ($result_escrow->status == 'success') {
-
-				update_post_meta($order_id, 'txn_no', $result_escrow->data->txn_no);
-
-				$argsPayment = array(
-					"txn_no" => $result_escrow->data->txn_no,
-					"percentage" => 0,
-					"complete_url" => $this->get_return_url($order),
-					"error_url" => $this->get_return_url($order),
-					"callback_url" => $this->callBackUrl,
+				return array(
+					'result' => 'success',
+					'redirect' => esc_url($redirect_url),
 				);
 
 				$payment_api_endpoint = "/v1/session/payment";
@@ -1505,11 +1289,6 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 					);
 				}
 			}
-		} else {
-			// return array(
-			//     'result' => 'success',
-			//     'redirect' => $this->get_return_url($order)
-			// );
 		}
 	}
 
@@ -1755,8 +1534,7 @@ $getEscrowstate = $this->tcpg_request_api_orderstatus($txn_no);
 
 	//This is checking that is this email id of seller known the user of tazapay
 	public function isRegistered($errorcode, $message) {
-		//$isSellerRegistered = $this->tcpg_request_api_getuser($this->get_option('seller_email'));
-		$isSellerRegistered = $this->seller_data;
+		$isSellerRegistered = $this->tcpg_request_api_getuser($this->seller_email);
 		if (isset($isSellerRegistered->errors[0]->code)) {
 			if ($isSellerRegistered->errors[0]->code == $errorcode) {
 				return $message;
@@ -1849,8 +1627,8 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways) {
 	$buyer_country = "";
 	$request_api_call = new TCPG_Gateway();
 	$payment_id = 'tz_tazapay';
-	$field_key = 'billing_country';  
-	/*$field_value = WC()->session->get('field_' . $field_key);*/
+	$field_key = 'billing_country';
+	/* $field_value = WC()->session->get('field_' . $field_key);*/
 	$field_value =WC()->customer->get_billing_country();
 	$site_currency = get_option('woocommerce_currency');
 
