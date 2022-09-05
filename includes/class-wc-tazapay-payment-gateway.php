@@ -1491,8 +1491,8 @@ $buyer_country_name = WC()->countries->countries[$order->get_billing_country()];
 
 					$redirect_url = $result_payment->data->redirect_url;
 					$order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
-					$order->reduce_order_stock();
-
+					//$order->reduce_order_stock();
+                    wc_reduce_stock_levels($order_id);
 					$woocommerce->cart->empty_cart();
 
 					update_post_meta($order_id, 'redirect_url', $redirect_url);
@@ -1849,8 +1849,9 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways) {
 	$buyer_country = "";
 	$request_api_call = new TCPG_Gateway();
 	$payment_id = 'tz_tazapay';
-	$field_key = 'billing_country';
-	$field_value = WC()->session->get('field_' . $field_key);
+	$field_key = 'billing_country';  
+	/*$field_value = WC()->session->get('field_' . $field_key);*/
+	$field_value =WC()->customer->get_billing_country();
 	$site_currency = get_option('woocommerce_currency');
 
 	if (isset($available_gateways[$payment_id]) && !empty($field_value)) {

@@ -4,7 +4,7 @@ Donate link: https://tazapay.com/
 Tags: TazaPay, WooCommerce, credit card, gateway
 Requires at least: 4.0
 Tested up to: 6.0
-Stable tag: 1.3.8
+Stable tag: 1.3.9
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -13,31 +13,51 @@ This plugin enables your WooCommerce powered platform to start accepting interna
 
 == Description ==
 
-* How do Tazapay's escrow payments work ?
-1. The buyer can select the product or service and make a payment like any other online checkout option (available payment methods depend on the buyer's country and the amount of money to be transferred)
-2. Once the payment is complete, the funds are received and secured in a bank account under the jurisdiction of MAS (Monetary Authority of Singapore)
-3. Once the product is shipped or the services rendered, the seller (or your platform) can provide a proof of order fulfillment to Tazapay for verification
-4. As soon as Tazapay verifies the documents, the payment is released to the seller
+<strong>Why Tazapay?</strong>
+<ul>
+<li>Over 173 markets and 70+ localised payment methods</li>
+<li>1.8% payment fees for non-card payments</li>
+<li>Enable buyer protection for high-value transactions</li>
+</ul>
 
-* Features
-1. Add an international payment method to your checkout page to enable payments from buyers from over 90+ countries
-2. Low cost secured payments for buyers and sellers at best in class FX rates
-3. Easily monetize your platform by enabling a platform fee: we handle the collection and settlement on your behalf!
-4. Wide variety of payment methods accepted: Mastercard, VISA, Local Bank Transfers, and other local payment
-5. Especially relevant for B2B as large value transactions upto $1M are supported at a low cost and with escrow protection. Fully compliant with local and international regulations, all relevant trade documents are provided.
+<strong>How does Tazapay checkout work?</strong>
 
-* Get Started with Tazapay Payments Plugin
-1. Request your API Key and Secret by signing up here: 
-   Sandbox: https://sandbox.tazapay.com/signup
-   Production: https://app.tazapay.com/signup
-2. Install WooCommerce and activate your plugin
-3. Download the Tazapay payment module from: https://wordpress.org/plugins/wc-tp-payment-gateway/
-4. Go to the 'Admin Panel' and upload the zipped file you downloaded in the 'Plugins' option and activate
-5. Go to the default WooCommerce settings menu and click on the 'Payments' tab 
-6. Enable Tazapay Payments Plugin
-7. Add your 'API Key' and 'Secret' (obtained from Tazapay after completign Step 1) in the Tazapay Payments Plugin management in the default WooCommerce payment tab (NOTE: You can add 'sandbox' keys for test transactions and 'production' keys for real transactions)
-8. Please input the email ID which you used to signup with Tazapay
-9. Please ensure that "TazaPay Users" is checked (child of WooCommerce menu)
+Choose between allowing direct payments or escrow payments when handling transactions on your online shop.
+
+Direct Payment (Ideal for High Volume, Low Value Purchases)
+<ol>
+<li>
+Once your buyer confirms their order and chooses Tazapay checkout, they will be redirected to Tazapay’s checkout page where they can select between multiple payment methods ranging from:
+<ul>
+<li>Bank transfer</li>
+<li>QR code</li>
+<li>Voucher payments</li>
+<li>Cards and more</li>
+</ul>
+Available payment methods depend on where they are located.</li>
+
+<li>Upon payment receipt, the seller can opt to choose between getting their payout in USD or with their local currency.</li>
+</ol>
+
+Escrow Payment (Ideal for High Value, Low Volume Purchases)
+<ol>
+<li>The buyer and seller agree to the terms of trade, and the buyer first pays to the escrow account in an online checkout</li>
+<li>Once the payment is complete, the funds are received and secured in a bank account under the jurisdiction of MAS (Monetary Authority of Singapore).</li>
+<li>When the product is shipped or the services are rendered, the seller (or your platform) can provide a proof of fulfilment to Tazapay for verification</li>
+<li>As soon as Tazapay verifies the documents, the payment is released to the seller</li>
+</ol>
+
+<strong>Features</strong>
+<ul>
+<li>Enable cost-effective localised payment methods to your buyers at more than 70 major markets</li>
+<li>Checkout paywall and payment methods are dynamically loaded based on buyer’s location</li>
+<li>Transparent and competitive FX rates displayed upfront for all payment methods during checkout</li>
+<li>Offer protection for high-value transactions with Tazapay’s escrow & give your buyers a peace of mind</li>
+</ul>
+
+<strong>How to Install Tazapay’s WooCommerce App?</strong>
+
+Read our step-by-step guide on our FAQ, <a href="https://support.tazapay.com/how-do-i-install-tazapays-woocommerce-plugin" target="_blank">how do I install Tazapay’s WooCommerce Plugin</a>.
 
 == Installation ==
 
@@ -76,13 +96,15 @@ ver 1.3.3:
 ver 1.3.4:
 - Speed optimization by storing seller info in database
 ver 1.3.5:
-– Plugin description updated
+- Plugin description updated
 ver 1.3.6:
-– Plugin description updated
+- Plugin description updated
 ver 1.3.7:
-– Plugin description updated
+- Plugin description updated
 ver 1.3.8:
-– Order status update on offline payment approval
+- Order status update on offline payment approval
+ver 1.3.9:
+- Bug fixing to handle critical error log
 
 == Upgrade Notice ==
 
