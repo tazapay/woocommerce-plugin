@@ -1,6 +1,6 @@
 <?php
 if (!class_exists('WP_List_Table')) {
-    require_once(ABSPATH . 'wp-admin/includes/class-wp-list-table.php');
+    include_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
 class TCPG_User_List_Table extends WP_List_Table
@@ -10,11 +10,13 @@ class TCPG_User_List_Table extends WP_List_Table
         global $status, $page;
 
         //Set parent defaults
-        parent::__construct(array(
+        parent::__construct(
+            array(
             'singular'  => 'tazapayuser',    //singular name of the listed records
             'plural'    => 'tazapayusers',   //plural name of the listed records
             'ajax'      => false             //does this table support ajax?
-        ));
+            )
+        );
     }
     /*
     * WP_List_Table::single_row_columns()
@@ -33,17 +35,17 @@ class TCPG_User_List_Table extends WP_List_Table
 
         foreach ($results as $result) {
 
-            $first_name         = isset($result->first_name) ? esc_html( $result->first_name ) : '';
-            $last_name          = isset($result->last_name) ? esc_html( $result->last_name ) : '';
-            $user_type          = isset($result->user_type) ? esc_html( $result->user_type ) : '';
-            $contact_code       = isset($result->contact_code) ? esc_html( $result->contact_code ) : '';
-            $contact_number     = isset($result->contact_number) ? esc_html( $result->contact_number ) : '';
-            $country_name       = isset($result->country) ? esc_html( $result->country ) : '';
-            $ind_bus_type       = isset($result->ind_bus_type) ? esc_html( $result->ind_bus_type ) : '';
-            $business_name      = isset($result->business_name) ? esc_html( $result->business_name ) : '';
-            $created            = isset($result->created) ? esc_html( $result->created ) : '';
-            $environment        = isset($result->environment) ? esc_html( $result->environment ) : '';
-            $account_id         = isset($result->account_id) ? esc_html( $result->account_id ) : '';
+            $first_name         = isset($result->first_name) ? esc_html($result->first_name) : '';
+            $last_name          = isset($result->last_name) ? esc_html($result->last_name) : '';
+            $user_type          = isset($result->user_type) ? esc_html($result->user_type) : '';
+            $contact_code       = isset($result->contact_code) ? esc_html($result->contact_code) : '';
+            $contact_number     = isset($result->contact_number) ? esc_html($result->contact_number) : '';
+            $country_name       = isset($result->country) ? esc_html($result->country) : '';
+            $ind_bus_type       = isset($result->ind_bus_type) ? esc_html($result->ind_bus_type) : '';
+            $business_name      = isset($result->business_name) ? esc_html($result->business_name) : '';
+            $created            = isset($result->created) ? esc_html($result->created) : '';
+            $environment        = isset($result->environment) ? esc_html($result->environment) : '';
+            $account_id         = isset($result->account_id) ? esc_html($result->account_id) : '';
             $countryName        = WC()->countries->countries[$country_name];
 
             if ($account_id) {
@@ -69,22 +71,22 @@ class TCPG_User_List_Table extends WP_List_Table
     function column_default($item, $column_name)
     {
         switch ($column_name) {
-            case 'id':
-            case 'account_id':
-            case 'user_type':
-            case 'email':
-            case 'first_name':
-            case 'last_name':
-            case 'contact_code':
-            case 'contact_number':
-            case 'country_name':
-            case 'ind_bus_type':
-            case 'created':
-            case 'business_name':
-            case 'environment':
-                return $item[$column_name];
-            default:
-                return print_r($item, true);
+        case 'id':
+        case 'account_id':
+        case 'user_type':
+        case 'email':
+        case 'first_name':
+        case 'last_name':
+        case 'contact_code':
+        case 'contact_number':
+        case 'country_name':
+        case 'ind_bus_type':
+        case 'created':
+        case 'business_name':
+        case 'environment':
+            return $item[$column_name];
+        default:
+            return print_r($item, true);
         }
     }
 
@@ -194,11 +196,13 @@ class TCPG_User_List_Table extends WP_List_Table
 
         $this->items = $data;
 
-        $this->set_pagination_args(array(
+        $this->set_pagination_args(
+            array(
             'total_items' => $total_items,
             'per_page'    => $per_page,
             'total_pages' => ceil($total_items / $per_page)
-        ));
+            )
+        );
     }
 }
 /*
@@ -222,7 +226,7 @@ add_action('admin_menu', 'tcpg_add_menu_items');
 */
 function tcpg_signup_form($atts)
 {
-    require_once plugin_dir_path(__FILE__) . 'shortcodes/tazapay-accountform-shortcode.php';
+    include_once plugin_dir_path(__FILE__) . 'shortcodes/tazapay-accountform-shortcode.php';
 }
 
 /*
@@ -233,7 +237,7 @@ function tcpg_render_list_page()
     $tazapayListTable = new TCPG_User_List_Table();
     $tazapayListTable->prepare_items();
 
-?>
+    ?>
     <div class="wrap">
         <div id="icon-users" class="icon32"><br /></div>
         <h2><?php esc_html_e('Tazapay Users', 'wc-tp-payment-gateway'); ?></h2>        
@@ -264,7 +268,7 @@ function tcpg_render_edit_page()
                 $wpdb->query($wpdb->prepare("UPDATE $tablename SET account_id = %s WHERE ID = %s", $new_value, $user_id));
                 $success = true;
             }
-    ?>
+            ?>
             <div class="wrap">
                 <h2><?php esc_html_e('Edit Tazapay Account UUID', 'wc-tp-payment-gateway'); ?></h2>
                 <div id="response-message">
@@ -281,7 +285,7 @@ function tcpg_render_edit_page()
                         <table class="form-table">
                             <tr valign="top">
                                 <th scope="row"><label><?php esc_html_e('Tazapay Account UUID', 'wc-tp-payment-gateway'); ?></label></th>
-                                <td><input type="text" name="account_id" id="account_id" value="<?php esc_html_e( $account_id, 'wc-tp-payment-gateway' ); ?>" placeholder="<?php esc_attr_e('Tazapay Account UUID', 'wc-tp-payment-gateway'); ?>" size="50" required />
+                                <td><input type="text" name="account_id" id="account_id" value="<?php esc_html_e($account_id, 'wc-tp-payment-gateway'); ?>" placeholder="<?php esc_attr_e('Tazapay Account UUID', 'wc-tp-payment-gateway'); ?>" size="50" required />
                                 </td>
                             </tr>
                             <tr valign="top">
@@ -294,7 +298,7 @@ function tcpg_render_edit_page()
                     </form>
                 </div>
             </div>
-<?php
+            <?php
         }
     }
 }
