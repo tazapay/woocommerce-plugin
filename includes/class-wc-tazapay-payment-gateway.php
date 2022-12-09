@@ -55,11 +55,12 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
         if(empty($_SESSION['seller_info'])) {
             $_SESSION['seller_info'] = $this->save_seller_information($this->get_option('seller_email'));
-            $this->seller_data = $_SESSION['seller_info']->info;
-            $this->countryconfig = $_SESSION['seller_info']->seller_country;
+			// santized data
+            $this->seller_data = sanitize_text_field($_SESSION['seller_info']->info);
+            $this->countryconfig = sanitize_text_field($_SESSION['seller_info']->seller_country);
         }else{
-            $this->seller_data = $_SESSION['seller_info']->info;
-            $this->countryconfig = $_SESSION['seller_info']->seller_country;
+            $this->seller_data = sanitize_text_field($_SESSION['seller_info']->info);
+            $this->countryconfig = sanitize_text_field($_SESSION['seller_info']->seller_country);
         }
 
 
@@ -105,7 +106,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
             if(!empty($results)) {
                 return $this->convertInObject($results[0]);    //CALLING FUNCTION TO CONVERT FROM ARRAY TO OBJECT
             }else{ 
-                include_once ABSPATH . 'wp-content/plugins/tazapay/wc-tazapay-payment-gateway.php';
+                require_once(ABSPATH . 'wp-content/plugins/tazapay/wc-tazapay-payment-gateway.php');
                 tcpg_seller_info_install();   //DROP TABLE FOR INSERTING FRESH SELLER INFORMATION
                 tcpg_country_config_install();    //DROP TABLE FOR INSERTING FRESH SELLER COUNTRY INFORMATION
                 $sellerData = array();

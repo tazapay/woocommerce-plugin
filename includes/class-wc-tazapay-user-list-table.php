@@ -1,6 +1,6 @@
 <?php
 if (!class_exists('WP_List_Table')) {
-    include_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+    require_once(ABSPATH . 'wp-admin/includes/class-wp-list-table.php');
 }
 
 class TCPG_User_List_Table extends WP_List_Table
@@ -226,7 +226,7 @@ add_action('admin_menu', 'tcpg_add_menu_items');
 */
 function tcpg_signup_form($atts)
 {
-    include_once plugin_dir_path(__FILE__) . 'shortcodes/tazapay-accountform-shortcode.php';
+    require_once(plugin_dir_path(__FILE__) . 'shortcodes/tazapay-accountform-shortcode.php');
 }
 
 /*

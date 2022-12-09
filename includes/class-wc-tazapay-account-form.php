@@ -14,7 +14,7 @@ class TCPG_Account
     {
         if (!is_admin() && !wp_doing_ajax()) {
             ob_start();
-            include_once plugin_dir_path(__FILE__) . 'shortcodes/tazapay-accountform-shortcode.php';
+            require_once(plugin_dir_path(__FILE__) . 'shortcodes/tazapay-accountform-shortcode.php');
             return ob_get_clean();
         } else {
             return '[tazapay-account]';
