@@ -84,7 +84,9 @@ function tcpg_user_install()
         created varchar(255) NOT NULL,
 
         PRIMARY KEY  (id)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ; ";
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        
+        include_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
         dbDelta($sql);
     } 
 
@@ -135,7 +137,7 @@ function tcpg_seller_info_install()
         status varchar(255) NOT NULL,
 
         PRIMARY KEY  (id)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ; ";
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        include_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
     }
 }
@@ -171,7 +173,7 @@ function tcpg_country_config_install()
         status varchar(50) NOT NULL,
 
         PRIMARY KEY  (id)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ; ";
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        include_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
     }
 }
@@ -297,7 +299,7 @@ function tcpg_init_gateway_class()
 
 
 
-    include_once(ABSPATH . 'wp-admin/includes/plugin.php');
+    include_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 
 
