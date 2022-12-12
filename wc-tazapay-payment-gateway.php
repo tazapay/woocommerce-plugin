@@ -8,7 +8,7 @@
 
  * Description:       Pay securely with buyer protection.
 
- * Version:           1.4.0
+ * Version:           1.4.3
 
  * Author:            Tazapay
 
@@ -43,7 +43,6 @@ register_activation_hook(__FILE__, 'tcpg_country_config_install');
 */
 
 function tcpg_user_install()
-
 {
 
     global $wpdb;
@@ -55,8 +54,7 @@ function tcpg_user_install()
     $charset_collate = $wpdb->get_charset_collate();
 
 
-    if($wpdb->get_var( "show tables like '$table_name'" ) != $table_name) 
-    {
+    if($wpdb->get_var("show tables like '$table_name'") != $table_name) {
 
         $sql = "CREATE TABLE `". $table_name . "` ( ";
         $sql .= "  id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -86,7 +84,9 @@ function tcpg_user_install()
         created varchar(255) NOT NULL,
 
         PRIMARY KEY  (id)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ; ";
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        
+        include_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
         dbDelta($sql);
     } 
 
@@ -107,8 +107,7 @@ function tcpg_seller_info_install()
     $charset_collate = $wpdb->get_charset_collate();
 
 
-    if($wpdb->get_var( "show tables like '$table_name'" ) != $table_name || $wpdb->get_var( "show tables like '$table_name'" ) == $table_name) 
-    {
+    if($wpdb->get_var("show tables like '$table_name'") != $table_name || $wpdb->get_var("show tables like '$table_name'") == $table_name) {
         resetTable($table_name);
         $sql = "CREATE TABLE `". $table_name . "` ( ";
         $sql .= "  id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -138,7 +137,7 @@ function tcpg_seller_info_install()
         status varchar(255) NOT NULL,
 
         PRIMARY KEY  (id)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ; ";
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        include_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
     }
 }
@@ -158,8 +157,7 @@ function tcpg_country_config_install()
     $charset_collate = $wpdb->get_charset_collate();
 
 
-    if($wpdb->get_var( "show tables like '$table_name'" ) != $table_name || $wpdb->get_var( "show tables like '$table_name'" ) == $table_name) 
-    {
+    if($wpdb->get_var("show tables like '$table_name'") != $table_name || $wpdb->get_var("show tables like '$table_name'") == $table_name) {
         resetTable($table_name);
         $sql = "CREATE TABLE `". $table_name . "` ( ";
         $sql .= "  id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -175,7 +173,7 @@ function tcpg_country_config_install()
         status varchar(50) NOT NULL,
 
         PRIMARY KEY  (id)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ; ";
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        include_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
     }
 }
@@ -187,8 +185,8 @@ function resetTable($table_name)
 {
     global $wpdb;
     $sql        = "DROP TABLE IF EXISTS $table_name";
-    $wpdb->query( $sql );
-    delete_option( 'wp_install_uninstall_config' );
+    $wpdb->query($sql);
+    delete_option('wp_install_uninstall_config');
 }
 
 
@@ -201,7 +199,6 @@ function resetTable($table_name)
 add_filter('woocommerce_payment_gateways', 'tcpg_add_gateway_class');
 
 function tcpg_add_gateway_class($gateways)
-
 {
 
     $gateways[] = 'TCPG_Gateway';
@@ -221,7 +218,6 @@ function tcpg_add_gateway_class($gateways)
 add_action('wp_enqueue_scripts', 'tcpg_frontend_enqueue_styles');
 
 function tcpg_frontend_enqueue_styles()
-
 {
 
     wp_enqueue_style('tazapay_form_css', TCPG_PUBLIC_ASSETS_DIR . 'css/tazapay-frontend.css', array(), TCPG_CSS_JSS_VERISON, 'all');
@@ -243,7 +239,6 @@ function tcpg_frontend_enqueue_styles()
 add_action('admin_enqueue_scripts', 'tcpg_enqueue_styles');
 
 function tcpg_enqueue_styles()
-
 {
 
     wp_enqueue_style('tazapay_form_css', TCPG_PUBLIC_ASSETS_DIR . 'css/tazapay-form.css', array(), TCPG_CSS_JSS_VERISON, 'all');
@@ -265,7 +260,6 @@ function tcpg_enqueue_styles()
 add_filter("plugin_action_links_$plugin", 'tcpg_plugin_settings_link');
 
 function tcpg_plugin_settings_link($links)
-
 {
 
     $settings_link = '<a href="admin.php?page=wc-settings&tab=checkout&section=tz_tazapay">Settings</a>';
@@ -287,16 +281,15 @@ function tcpg_plugin_settings_link($links)
 add_action('plugins_loaded', 'tcpg_init_gateway_class');
 
 function tcpg_init_gateway_class()
-
 {
 
-    require 'includes/class-wc-tazapay-payment-gateway.php';
+    include 'includes/class-wc-tazapay-payment-gateway.php';
 
-    require 'includes/class-wc-tazapay-user-list-table.php';
+    include 'includes/class-wc-tazapay-user-list-table.php';
 
-    require 'includes/class-wc-tazapay-account-form.php';
+    include 'includes/class-wc-tazapay-account-form.php';
 
-    require 'includes/wc-order-status-change.php';
+    include 'includes/wc-order-status-change.php';
 
 
 
@@ -306,27 +299,28 @@ function tcpg_init_gateway_class()
 
 
 
-    include_once(ABSPATH . 'wp-admin/includes/plugin.php');
+    include_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 
 
     if ($tazapay_seller_type == 'multiseller' && is_plugin_active('dokan-lite/dokan.php')) {
 
-        require 'includes/dokan-add-new-menu.php';
+        include 'includes/dokan-add-new-menu.php';
 
     }
 
     if ($tazapay_seller_type == 'multiseller' && is_plugin_active('wc-vendors/class-wc-vendors.php')) {
 
-        require 'includes/wcvendors-add-new-menu.php';
+        include 'includes/wcvendors-add-new-menu.php';
 
     }
 
     if ($tazapay_seller_type == 'multiseller' && is_plugin_active('wc-multivendor-marketplace/wc-multivendor-marketplace.php') && is_plugin_active('wc-frontend-manager/wc_frontend_manager.php')) {
 
-        require 'includes/wcfm-add-new-menu.php';
+        include 'includes/wcfm-add-new-menu.php';
 
     }
+
 
 
 
