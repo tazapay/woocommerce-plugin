@@ -92,7 +92,6 @@
           "ind_bus_type"    => $indbustype,
         );
       }
-
       $api_endpoint = "/v1/user";
       $api_url      = $api_url . '/v1/user';
       $createUser   = $apiRequestCall->tcpg_request_apicall($api_url, $api_endpoint, $args, '');

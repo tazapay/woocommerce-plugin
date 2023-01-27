@@ -127,7 +127,7 @@ function tcpg_sellerinfo_wcvendors()
 						"ind_bus_type"          => $indbustype
 					);
 				}
-
+				
 				$api_endpoint = "/v1/user";
 				$api_url  = $api_url . '/v1/user';
 

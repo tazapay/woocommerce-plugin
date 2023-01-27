@@ -101,6 +101,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
     */
     public function save_seller_information($seller_email = "")
     {
+        unset($_SESSION['seller_info']);
         if($seller_email != "") {
             global $wpdb;
 
@@ -116,7 +117,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
                 $sellerData = array();
                 $countryConfigData = array();
                 $gerSellerInfo = (object)array();
-                $sellerInfo = $this->tcpg_request_api_getuser($seller_email);
+                $sellerInfo = $this->get_seller_info_from_session($seller_email);
                 if($sellerInfo->status == 'success') {
                     //*******START TO ADD SELLER INFO*****//
                     $gerSellerInfo->info = $sellerInfo;
@@ -308,7 +309,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
         'title' => __('Title', 'wc-tp-payment-gateway'),
         'type' => 'text',
         'description' => __('Payment method title', 'wc-tp-payment-gateway'),
-        'default' => 'Pay Now, Release Later',
+        'default' => 'Payment with Local Payment Methods and Cards',
         'class' => '',
         ),
         'sandboxmode' => array(
@@ -974,32 +975,34 @@ class TCPG_Gateway extends WC_Payment_Gateway
     */
     public function tcpg_request_api_getuser($emailoruuid)
     {
+
+            // $this->create_taza_logs("Start > Get User call for {$emailoruuid}\n");
+            $method = "GET";
+            $APIEndpoint = "/v1/user/" . $emailoruuid;
+            $api_url = $this->base_api_url;
+
+            $authentication = $this->tcpg_authentication();
+
+            $response = wp_remote_post(
+                esc_url_raw($api_url) . $APIEndpoint,
+                array(
+                'method' => 'GET',
+                'sslverify' => false,
+                'headers' => array(
+                'Authorization' => $authentication,
+                'Content-Type' => 'application/json',
+                ),
+                )
+            );
+            if (is_wp_error($response)) {
+                $error_message = $response->get_error_message();
+                esc_html_e('Something went wrong: ' . $error_message, 'wc-tp-payment-gateway');
+            } else {
+                $api_array = json_decode(wp_remote_retrieve_body($response));
+            }
+          
         
-        $method = "GET";
-        $APIEndpoint = "/v1/user/" . $emailoruuid;
-        $api_url = $this->base_api_url;
-
-        $authentication = $this->tcpg_authentication();
-
-        $response = wp_remote_post(
-            esc_url_raw($api_url) . $APIEndpoint,
-            array(
-            'method' => 'GET',
-            'sslverify' => false,
-            'headers' => array(
-            'Authorization' => $authentication,
-            'Content-Type' => 'application/json',
-            ),
-            )
-        );
-        if (is_wp_error($response)) {
-            $error_message = $response->get_error_message();
-            esc_html_e('Something went wrong: ' . $error_message, 'wc-tp-payment-gateway');
-        } else {
-            $api_array = json_decode(wp_remote_retrieve_body($response));
-        }
-
-        //$this->create_taza_logs("End > Get User \n");
+        // $this->create_taza_logs("End > Get User \n");
 
         return $api_array;
     }
@@ -1036,6 +1039,17 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
         //$this->create_taza_logs("End > Get User Country Code \n");
         return $api_array;
+    }
+
+    public function get_seller_info_from_session($seller_email)
+    {
+        // $this->create_taza_logs("get_seller_info_from_session {$seller_email}" . empty($_SESSION['seller_info']));
+        if(empty($_SESSION['seller_info'])) {
+            $getsellerapi = $this->tcpg_request_api_getuser($seller_email);
+        } else {
+            $getsellerapi = sanitize_user_object($_SESSION['seller_info']->info);
+        }
+        return $getsellerapi;
     }
 
     /*
@@ -1110,12 +1124,12 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
                 //$this->create_taza_logs("Start > Get User API> process_payment multiseller (seller email)> /v1/user/");
 
-                $getsellerapi = $this->tcpg_request_api_getuser($this->seller_email);
+                $getsellerapi = $this->get_seller_info_from_session($this->seller_email);
             } else {
 
                 //    $this->create_taza_logs("Start > Get User API> process_payment multiseller (seller email)> /v1/user/");
 
-                $getsellerapi = $this->tcpg_request_api_getuser($seller_email[0]);
+                $getsellerapi = $this->get_seller_info_from_session($seller_email[0]);
             }
         } else {
 
@@ -1556,8 +1570,8 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
     //This is checking that is this email id of seller known the user of tazapay
     public function isRegistered($errorcode, $message)
-    {
-        $isSellerRegistered = $this->tcpg_request_api_getuser($this->seller_email);
+    {   
+        $isSellerRegistered = $this->get_seller_info_from_session($this->seller_email);
         if (isset($isSellerRegistered->errors[0]->code)) {
             if ($isSellerRegistered->errors[0]->code == $errorcode) {
                 return $message;
@@ -1689,7 +1703,7 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways)
 
                     //    $request_api_call->create_taza_logs("Start > Get User API> tcpg_payment_gateway_disable_tazapay  sellercount==1> /v1/user/");
 
-                    $getuserapi = $request_api_call->tcpg_request_api_getuser($seller_email[0]);
+                    $getuserapi = $request_api_call->get_seller_info_from_session($seller_email[0]);
 
                     //$request_api_call->create_taza_logs("Start > Get user country code > tcpg_payment_gateway_disable_tazapay> /v1/metadata/countryconfig");
 
@@ -1722,7 +1736,7 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways)
 
             //$request_api_call->create_taza_logs("Start > Get User API> tcpg_payment_gateway_disable_tazapay single seller> /v1/user/");
 
-            $getuserapi = $request_api_call->tcpg_request_api_getuser($seller_email);
+            $getuserapi = $request_api_call->get_seller_info_from_session($seller_email);
 
             //$request_api_call->create_taza_logs("Start > Get user country code > tcpg_payment_gateway_disable_tazapay> /v1/metadata/countryconfig");
 
