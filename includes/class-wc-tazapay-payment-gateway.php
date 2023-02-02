@@ -874,6 +874,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
     public function validate_fields()
     {
         if (sanitize_email($_POST['billing_email']) == $this->get_option('seller_email')) {
+            wc_clear_notices();
             wc_add_notice('Buyer and seller email should not be identical, Please change buyer email address.', 'error');
             return false;
         }
@@ -1101,7 +1102,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
         $user_email = $order->get_billing_email();
         $phoneCode = $this->tcpg_getphonecode($order->get_billing_country());
         $tablename = $wpdb->prefix . 'tazapay_user';
-        $site_currency = get_option('woocommerce_currency');
+        $site_currency = $order->get_currency();
         // for multiseller
         if ($this->tazapay_seller_type == 'multiseller') {
 
@@ -1157,6 +1158,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
         //$countryconfig = $this->tcpg_request_api_countryconfig($getsellerapi->data->country_code);
 
         if ($this->countryconfig->status == 'success' && in_array($buyer_country, $this->countryconfig->data->buyer_countries)) {
+            wc_clear_notices();
 
             $invoice_currency_check = $this->tcpg_request_api_invoicecurrency($buyer_country, $getsellerapi->data->country_code);
             $store_currency = get_woocommerce_currency();
@@ -1196,12 +1198,13 @@ class TCPG_Gateway extends WC_Payment_Gateway
             ),
             "seller_id" => $seller_id,
             "fee_paid_by" => "buyer",
-            "invoice_currency" => get_option('woocommerce_currency'),
+            "invoice_currency" => $order->get_currency(),
             "invoice_amount" => $order->get_total(),
             "txn_description" => $description,
             "callback_url" => $this->callBackUrl,
             "complete_url" => $this->get_return_url($order),
             "error_url" => $this->get_return_url($order),
+            "transaction_source" => "woocommerce"
             );
             $api_endpoint = "/v1/checkout";
             $api_url = $this->base_api_url . '/v1/checkout';
@@ -1215,6 +1218,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
                     }
                 }
                 $order->add_order_note($payment_msg, true);
+                wc_clear_notices();
                 return wc_add_notice($payment_msg, 'error');
             }
 
@@ -1671,7 +1675,7 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways)
     $field_key = 'billing_country';
     /* $field_value = WC()->session->get('field_' . $field_key);*/
     $field_value =WC()->customer->get_billing_country();
-    $site_currency = get_option('woocommerce_currency');
+    $site_currency = get_woocommerce_currency();
 
     if (isset($available_gateways[$payment_id]) && !empty($field_value)) {
 
@@ -1708,6 +1712,7 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways)
                     //$request_api_call->create_taza_logs("Start > Get user country code > tcpg_payment_gateway_disable_tazapay> /v1/metadata/countryconfig");
 
                     $countryconfig = $request_api_call->tcpg_request_api_countryconfig($getuserapi->data->country_code);
+                    wc_clear_notices();
 
                     if ($countryconfig->status == 'success' && in_array($field_value, $countryconfig->data->buyer_countries)) {
 
@@ -1741,6 +1746,7 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways)
             //$request_api_call->create_taza_logs("Start > Get user country code > tcpg_payment_gateway_disable_tazapay> /v1/metadata/countryconfig");
 
             $countryconfig = $request_api_call->tcpg_request_api_countryconfig($getuserapi->data->country_code);
+            wc_clear_notices();
 
             if ($countryconfig->status == 'success' && in_array($field_value, $countryconfig->data->buyer_countries)) {
 
