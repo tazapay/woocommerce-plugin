@@ -1266,9 +1266,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
                 update_post_meta($order_id, 'txn_no', $result->data->txn_no);
 
                 $redirect_url = $result->data->redirect_url;
-                $order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
-                $order->reduce_order_stock();
-                $woocommerce->cart->empty_cart();
+               
 
                 update_post_meta($order_id, 'redirect_url', $redirect_url);
 
@@ -1349,7 +1347,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
             $payment_url = get_post_meta($order->get_id(), 'redirect_url', true);
 
             if (isset($payment_url) && !empty($payment_url)) {
-                printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($payment_url), __("Pay With Tazapay", "wc-tp-payment-gateway"));
+                esc_html_e('On Hold', 'wc-tp-payment-gateway');
             }
         }
     }
@@ -1390,7 +1388,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
             ?>
             <h2><?php esc_html_e('Transaction Details', 'wc-tp-payment-gateway');?></h2>
-            <p><?php esc_html_e('Pay Now, Release Later powered by Tazapay', 'wc-tp-payment-gateway');?></p>
+            <p><?php esc_html_e('Payment powered by Tazapay', 'wc-tp-payment-gateway');?></p>
             <table class="woocommerce-table shop_table gift_info">
                 <tfoot>
                     <tr>
@@ -1411,8 +1409,8 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
                             if (isset($_POST['order-status']) && !empty($getEscrowstate->data->state) && !empty($getEscrowstate->data->sub_state)) {
                                 ?>
-                                <p><strong><?php esc_html_e('Escrow state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
-                                <p><strong><?php esc_html_e('Escrow sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
+                                <p><strong><?php esc_html_e('Payment state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
+                                <p><strong><?php esc_html_e('Payment sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
                                                    <?php
                             }
                             ?>
@@ -1432,7 +1430,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
                                     esc_html_e('Completed', 'wc-tp-payment-gateway');
                                 }
                             } else {
-                                                         printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($redirect_url), __("Pay With Tazapay", "wc-tp-payment-gateway"));
+                                esc_html_e('On Hold', 'wc-tp-payment-gateway');
                             }
                             ?>
                         </td>
@@ -1563,8 +1561,8 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
                 if (isset($_GET['order-status']) && !empty($getEscrowstate->data->state) && !empty($getEscrowstate->data->sub_state)) {
                     ?>
-                    <p><strong><?php esc_html_e('Escrow state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
-                    <p><strong><?php esc_html_e('Escrow sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
+                    <p><strong><?php esc_html_e('Payment state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
+                    <p><strong><?php esc_html_e('Payment sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
                            <?php
                 }
                 ?>
@@ -1829,8 +1827,8 @@ function tcpg_orders_list_column_content($column, $post_id)
                     <?php
             } else {
                 ?>
-                    <p><strong><?php esc_html_e('Escrow state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
-                    <p><strong><?php esc_html_e('Escrow sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
+                    <p><strong><?php esc_html_e('Payment state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
+                    <p><strong><?php esc_html_e('Payment sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
                 <?php
             }
         } else {
@@ -1868,7 +1866,7 @@ function tcpg_view_order_page($order_id)
 
         ?>
         <h2><?php esc_html_e('Transaction Details', 'wc-tp-payment-gateway');?></h2>
-        <p><?php esc_html_e('Pay Now, Release Later powered by Tazapay', 'wc-tp-payment-gateway');?></p>
+        <p><?php esc_html_e('Payment powered by Tazapay', 'wc-tp-payment-gateway');?></p>
         <table class="woocommerce-table shop_table gift_info">
             <tfoot>
                 <tr>
@@ -1889,8 +1887,8 @@ function tcpg_view_order_page($order_id)
 
                         if (isset($_POST['order-status']) && !empty($getEscrowstate->data->state) && !empty($getEscrowstate->data->sub_state)) {
                             ?>
-                            <p><strong><?php esc_html_e('Escrow state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
-                            <p><strong><?php esc_html_e('Escrow sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
+                            <p><strong><?php esc_html_e('Payment state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
+                            <p><strong><?php esc_html_e('Payment sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
                             <?php
                         }
                         ?>
@@ -1909,7 +1907,7 @@ function tcpg_view_order_page($order_id)
                                 esc_html_e('Completed', 'wc-tp-payment-gateway');
                             }
                         } else {
-                            printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($redirect_url), __("Pay With Tazapay", "wc-tp-payment-gateway"));
+                            esc_html_e('On Hold', 'wc-tp-payment-gateway');
                         }
                         ?>
                     </td>
