@@ -105,6 +105,11 @@ jQuery(document).ready(function($) {
     }
 
     $("#woocommerce_tz_tazapay_sandboxmode").change(function() {
+        $("#woocommerce_tz_tazapay_sandbox_api_key").val('');
+        $("#woocommerce_tz_tazapay_sandbox_api_secret_key").val('');
+        $("#woocommerce_tz_tazapay_live_api_key").val('');
+        $("#woocommerce_tz_tazapay_live_api_secret_key").val('');
+        $("#woocommerce_tz_tazapay_seller_email").val('');
         if (this.value == "sandbox") {
             $(".tz-signupurl").attr("href", "https://sandbox.tazapay.com/signup");
             $(".signup-help-text").text(
@@ -127,6 +132,8 @@ jQuery(document).ready(function($) {
                 "data-error",
                 "Please add Sandbox API Secret Key"
             );
+            $("#woocommerce_tz_tazapay_sandbox_api_key").next().text('Please input the Sandbox API Key / API Secret Key received from Tazapay');
+            $("#woocommerce_tz_tazapay_sandbox_api_secret_key").next().text('Please input the Sandbox API Key / API Secret Key received from Tazapay');
 
             $("#woocommerce_tz_tazapay_live_api_key").attr("required", false);
             $("#woocommerce_tz_tazapay_live_api_key").attr("data-error", "");
@@ -147,6 +154,10 @@ jQuery(document).ready(function($) {
                 "data-error",
                 "Please add Production API"
             );
+
+            $("#woocommerce_tz_tazapay_live_api_key").next().text('Please input the Production API Key / API Secret Key received from Tazapay');
+            $("#woocommerce_tz_tazapay_live_api_secret_key").next().text('Please input the Production API Key / API Secret Key received from Tazapay');
+
             $("#woocommerce_tz_tazapay_live_api_secret_key").attr("required", true);
             $("#woocommerce_tz_tazapay_live_api_secret_key").attr(
                 "data-error",

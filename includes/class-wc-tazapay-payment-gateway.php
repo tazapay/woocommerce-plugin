@@ -350,7 +350,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
         ),
         'seller_email' => array(
         'title' => __('Email', 'wc-tp-payment-gateway'),
-        'type' => 'text',
+        'type' => 'email',
         'description' => __($text4, 'wc-tp-payment-gateway'),
         'class' => 'tazapay-singleseller',
         ),
@@ -1170,7 +1170,9 @@ class TCPG_Gateway extends WC_Payment_Gateway
                 wc_add_notice($message, 'error');
             }
         } else {
-            $country_config_message = __('Transactions between buyers from ' . esc_html($buyer_country_name) . ' and sellers from ' . esc_html($getsellerapi->data->country) . ' are currently not supported', 'wc-tp-payment-gateway');
+            if($getsellerapi->data->country){
+                $country_config_message = __('Transactions between buyers from ' . esc_html($buyer_country_name) . ' and sellers from ' . esc_html($getsellerapi->data->country) . ' are currently not supported', 'wc-tp-payment-gateway');
+            }
             wc_add_notice($country_config_message, 'error');
         }
 
@@ -1203,8 +1205,8 @@ class TCPG_Gateway extends WC_Payment_Gateway
             "txn_description" => $description,
             "callback_url" => $this->callBackUrl,
             "complete_url" => $this->get_return_url($order),
-            "error_url" => $this->get_return_url($order),
-            "transaction_source" => "woocommerce"
+            "error_url" => wc_get_checkout_url(),
+            "transaction_source" => "woocommerce",
             );
             $api_endpoint = "/v1/checkout";
             $api_url = $this->base_api_url . '/v1/checkout';
@@ -1347,7 +1349,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
             $payment_url = get_post_meta($order->get_id(), 'redirect_url', true);
 
             if (isset($payment_url) && !empty($payment_url)) {
-                printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($payment_url), __("Pay With Escrow", "wc-tp-payment-gateway"));
+                printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($payment_url), __("Pay With Tazapay", "wc-tp-payment-gateway"));
             }
         }
     }
@@ -1430,7 +1432,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
                                     esc_html_e('Completed', 'wc-tp-payment-gateway');
                                 }
                             } else {
-                                                         printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($redirect_url), __("Pay With Escrow", "wc-tp-payment-gateway"));
+                                                         printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($redirect_url), __("Pay With Tazapay", "wc-tp-payment-gateway"));
                             }
                             ?>
                         </td>
@@ -1722,15 +1724,15 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways)
                         if ($invoice_currency_check->status == 'success' && in_array($store_currency, $invoice_currency_check->data->currencies)) {
                                   // no code required.
                         } else {
-                               unset($available_gateways[$payment_id]);
                                $buyer_country = WC()->countries->countries[$field_value];
                                $message = __('Transactions between buyers from ' . esc_html($buyer_country) . ' and sellers from ' . esc_html($getuserapi->data->country) . ' are currently not supported in ' . esc_html($site_currency) . '', 'wc-tp-payment-gateway');
                                wc_add_notice($message, 'error');
                         }
                     } else {
-                        unset($available_gateways[$payment_id]);
                         $buyer_country = WC()->countries->countries[$field_value];
-                        $country_config_message = __('Transactions between buyers from ' . esc_html($buyer_country) . ' and sellers from ' . esc_html($getuserapi->data->country) . ' are currently not supported', 'wc-tp-payment-gateway');
+                        if($getuserapi->data->country){
+                            $country_config_message = __('Transactions between buyers from ' . esc_html($buyer_country) . ' and sellers from ' . esc_html($getuserapi->data->country) . ' are currently not supported', 'wc-tp-payment-gateway');
+                        }
                         wc_add_notice($country_config_message, 'error');
                     }
                 }
@@ -1758,15 +1760,15 @@ function tcpg_payment_gateway_disable_tazapay($available_gateways)
                 if ($invoice_currency_check->status == 'success' && in_array($store_currency, $invoice_currency_check->data->currencies)) {
                     // no code required.
                 } else {
-                    unset($available_gateways[$payment_id]);
                     $buyer_country = WC()->countries->countries[$field_value];
                     $message = __('Transactions between buyers from ' . esc_html($buyer_country) . ' and sellers from ' . esc_html($getuserapi->data->country) . ' are currently not supported in ' . esc_html($site_currency) . '', 'wc-tp-payment-gateway');
                     wc_add_notice($message, 'error');
                 }
             } else {
-                unset($available_gateways[$payment_id]);
                 $buyer_country = WC()->countries->countries[$field_value];
-                $country_config_message = __('Transactions between buyers from ' . esc_html($buyer_country) . ' and sellers from ' . esc_html($getuserapi->data->country) . ' are currently not supported', 'wc-tp-payment-gateway');
+                if($getuserapi->data->country){
+                    $country_config_message = __('Transactions between buyers from ' . esc_html($buyer_country) . ' and sellers from ' . esc_html($getuserapi->data->country) . ' are currently not supported', 'wc-tp-payment-gateway');
+                }
                 wc_add_notice($country_config_message, 'error');
             }
         }
@@ -1907,7 +1909,7 @@ function tcpg_view_order_page($order_id)
                                 esc_html_e('Completed', 'wc-tp-payment-gateway');
                             }
                         } else {
-                            printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($redirect_url), __("Pay With Escrow", "wc-tp-payment-gateway"));
+                            printf('<a class="woocommerce-button button pay" href="%s">%s</a>', esc_url($redirect_url), __("Pay With Tazapay", "wc-tp-payment-gateway"));
                         }
                         ?>
                     </td>
