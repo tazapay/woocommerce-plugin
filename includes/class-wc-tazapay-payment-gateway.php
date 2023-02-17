@@ -93,7 +93,8 @@ class TCPG_Gateway extends WC_Payment_Gateway
         add_action('wp_ajax_order_status_refresh', array($this, 'tazapay_order_status_refresh'));
 
         add_action('woocommerce_api_tz_tazapay', array($this, 'webhook'));
-    
+
+		add_action( 'woocommerce_order_status_completed', array( $this, 'tcpg_view_order_and_thankyou_page' ) );
     }
 
     /*
@@ -468,7 +469,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
             $post_id = tazapay_post_id_by_meta_key_and_value('txn_no', $txn_no);
             $my_post = array(
             'ID' => $post_id,
-            'post_status' => 'wc-processing',
+            'post_status' => 'wc-completed',
             );
             wp_update_post($my_post);
         }
@@ -1421,7 +1422,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
                             if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
 
-                                             $order->update_status('processing');
+                                             $order->update_status('completed');
 
                                 if ($getEscrowstate->data->state == 'Payment_Received') {
                                     esc_html_e('Completed', 'wc-tp-payment-gateway');
