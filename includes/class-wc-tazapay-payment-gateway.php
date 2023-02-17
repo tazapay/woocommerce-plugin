@@ -94,6 +94,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
         add_action('woocommerce_api_tz_tazapay', array($this, 'webhook'));
 
+		add_action( 'woocommerce_order_status_processing', array( $this, 'tcpg_view_order_and_thankyou_page' ) );
 		add_action( 'woocommerce_order_status_completed', array( $this, 'tcpg_view_order_and_thankyou_page' ) );
     }
 
@@ -1899,7 +1900,7 @@ function tcpg_view_order_page($order_id)
                         <?php
 
                         if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
-                                         $order->update_status('processing');
+                                         $order->update_status('completed');
 
                             if ($getEscrowstate->data->state == 'Payment_Received') {
                                 esc_html_e('Completed', 'wc-tp-payment-gateway');
