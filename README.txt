@@ -123,5 +123,7 @@ ver 1.4.7:
 - Handle redirection to checkout page.
 ver 1.4.8:
 - Handle payment status change.
+ver 1.4.9:
+- Handle payment status change to processing.
 == Upgrade Notice ==
 
