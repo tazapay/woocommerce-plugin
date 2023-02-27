@@ -4,7 +4,7 @@ Donate link: https://tazapay.com/
 Tags: TazaPay, WooCommerce, credit card, gateway
 Requires at least: 4.0
 Tested up to: 6.1.1
-Stable tag: 1.4.8
+Stable tag: 1.5.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -125,5 +125,7 @@ ver 1.4.8:
 - Handle payment status change.
 ver 1.4.9:
 - Handle payment status change to processing.
+ver 1.5.0:
+- Handled Fee Paid by Buyer.
 == Upgrade Notice ==
 

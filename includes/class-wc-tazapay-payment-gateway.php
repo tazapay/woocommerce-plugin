@@ -1198,7 +1198,6 @@ class TCPG_Gateway extends WC_Payment_Gateway
             "contact_number" => $order->get_billing_phone(),
             ),
             "seller_id" => $seller_id,
-            "fee_paid_by" => "buyer",
             "invoice_currency" => $order->get_currency(),
             "invoice_amount" => $order->get_total(),
             "txn_description" => $description,

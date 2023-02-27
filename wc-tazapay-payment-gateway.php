@@ -8,7 +8,7 @@
 
  * Description:       Pay securely with buyer protection.
 
- * Version:           1.4.9
+ * Version:           1.5.0
 
  * Author:            Tazapay
 
