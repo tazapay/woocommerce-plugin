@@ -19,7 +19,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
         $this->method_title = 'Tazapay Gateway';
         $this->method_description = __('Collect payments from buyers, hold it until the seller/service provider fulfills their obligations before releasing the payment to them.', 'wc-tp-payment-gateway'); // will be displayed on the options page
 
-        $this->callBackUrl = get_site_url() . '/wc-api/' . $this->id;
+        $this->callBackUrl = get_site_url() . '/?wc-api/' . $this->id;
 
         // gateways can support subscriptions, refunds, saved payment methods,
         // but in this gateway we begin with simple payments
@@ -84,7 +84,8 @@ class TCPG_Gateway extends WC_Payment_Gateway
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'tcpg_getuser_info_options'));
 
-        add_action('woocommerce_thankyou', array($this, 'tcpg_view_order_and_thankyou_page'), 20);
+        add_action('woocommerce_thankyou_' . $this->id , array($this, 'tcpg_view_order_and_thankyou_page'), 20);
+        add_action( 'woocommerce_order_status_processing', array($this,'capture_order_change'));
 
         add_filter('woocommerce_gateway_icon', array($this, 'tcpg_woocommerce_icons'), 10, 2);
         add_filter('woocommerce_available_payment_gateways', array($this, 'tcpg_woocommerce_available_payment_gateways'));
@@ -93,6 +94,27 @@ class TCPG_Gateway extends WC_Payment_Gateway
         add_action('wp_ajax_order_status_refresh', array($this, 'tazapay_order_status_refresh'));
 
         add_action('woocommerce_api_tz_tazapay', array($this, 'webhook'));
+    }
+
+    public function capture_order_change($order_id){
+        
+        $order = wc_get_order($order_id);
+        $paymentMethod = get_post_meta($order_id, '_payment_method', true);
+
+        if ($paymentMethod == 'tz_tazapay') {
+
+            $user_email = $order->get_billing_email();
+            $txn_no = get_post_meta($order_id, 'txn_no', true);
+            $getEscrowstate = $this->tcpg_request_api_orderstatus($txn_no);
+           
+            $this->create_taza_logs($getEscrowstate->data->state);
+            if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
+                $order->update_status('processing', __('Payment successful. Transaction No: '. $txn_no, 'wc-tp-payment-gateway'));
+            }  else if(isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Awaiting_Payment' || $getEscrowstate->data->sub_state == 'Payment_Reported')){
+                $order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
+            }
+        }
+
     }
 
     /*
@@ -1417,19 +1439,13 @@ class TCPG_Gateway extends WC_Payment_Gateway
                             </form>
                             <?php
 
-                            if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
-
-                                             $order->update_status('processing');
-
-                                if ($getEscrowstate->data->state == 'Payment_Received') {
+                                if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
+                                    $order->update_status('processing', __('Payment successful. Transaction No: '. $txn_no, 'wc-tp-payment-gateway'));
                                     esc_html_e('Completed', 'wc-tp-payment-gateway');
+                                }  else if(isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Awaiting_Payment' || $getEscrowstate->data->sub_state == 'Payment_Reported')){
+                                    $order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
+                                    esc_html_e('On Hold', 'wc-tp-payment-gateway');
                                 }
-                                if ($getEscrowstate->data->sub_state == 'Payment_Done') {
-                                    esc_html_e('Completed', 'wc-tp-payment-gateway');
-                                }
-                            } else {
-                                esc_html_e('On Hold', 'wc-tp-payment-gateway');
-                            }
                             ?>
                         </td>
                     </tr>
@@ -1806,29 +1822,10 @@ function tcpg_orders_list_column_content($column, $post_id)
 
             $tcpg_request_api_orderstatus = new TCPG_Gateway();
             $getEscrowstate = $tcpg_request_api_orderstatus->tcpg_request_api_orderstatus($txn_no);
-            $getRefundStatus = $tcpg_request_api_orderstatus->tcpg_request_api_refundstatus($txn_no);
-
-            if ($getRefundStatus->data[0]->status == 'approved') {
-                //updatePostStatus($post_id, 'wc-refunded');  //Refund status
-                ?>
-                        <p><strong>Tazapay Refunded</strong></p>
-                    <?php
-            } elseif ($getRefundStatus->data[0]->status == 'requested') {
-                   //updatePostStatus($post_id, 'wc-processing');  //Refund status
-                ?>
-                        <p><strong>Tazapay Refund Requested</strong></p>
-                    <?php
-            } elseif ($getRefundStatus->data[0]->status == 'rejected') {
-                //updatePostStatus($post_id, 'wc-processing');  //Refund status
-                ?>
-                        <p><strong>Tazapay Refund Rejected</strong></p>
-                    <?php
-            } else {
                 ?>
                     <p><strong><?php esc_html_e('Payment state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->state, 'wc-tp-payment-gateway');?></p>
                     <p><strong><?php esc_html_e('Payment sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->sub_state, 'wc-tp-payment-gateway');?></p>
                 <?php
-            }
         } else {
             esc_html_e($payment_title, 'wc-tp-payment-gateway');
         }
@@ -1896,15 +1893,10 @@ function tcpg_view_order_page($order_id)
                         <?php
 
                         if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
-                                         $order->update_status('processing');
-
-                            if ($getEscrowstate->data->state == 'Payment_Received') {
-                                esc_html_e('Completed', 'wc-tp-payment-gateway');
-                            }
-                            if ($getEscrowstate->data->sub_state == 'Payment_Done') {
-                                esc_html_e('Completed', 'wc-tp-payment-gateway');
-                            }
-                        } else {
+                            $order->update_status('processing', __('Payment successful. Transaction No: '. $txn_no, 'wc-tp-payment-gateway'));
+                            esc_html_e('Completed', 'wc-tp-payment-gateway');
+                        }  else if(isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Awaiting_Payment' || $getEscrowstate->data->sub_state == 'Payment_Reported')){
+                            $order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
                             esc_html_e('On Hold', 'wc-tp-payment-gateway');
                         }
                         ?>
