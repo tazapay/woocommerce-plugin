@@ -19,7 +19,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
         $this->method_title = 'Tazapay Gateway';
         $this->method_description = __('Collect payments from buyers, hold it until the seller/service provider fulfills their obligations before releasing the payment to them.', 'wc-tp-payment-gateway'); // will be displayed on the options page
 
-        $this->callBackUrl = get_site_url() . '/?wc-api/' . $this->id;
+        $this->callBackUrl = get_site_url() . '/wc-api/' . $this->id;
 
         // gateways can support subscriptions, refunds, saved payment methods,
         // but in this gateway we begin with simple payments
@@ -85,7 +85,6 @@ class TCPG_Gateway extends WC_Payment_Gateway
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'tcpg_getuser_info_options'));
 
         add_action('woocommerce_thankyou_' . $this->id , array($this, 'tcpg_view_order_and_thankyou_page'), 20);
-        add_action( 'woocommerce_order_status_processing', array($this,'capture_order_change'));
 
         add_filter('woocommerce_gateway_icon', array($this, 'tcpg_woocommerce_icons'), 10, 2);
         add_filter('woocommerce_available_payment_gateways', array($this, 'tcpg_woocommerce_available_payment_gateways'));
@@ -93,28 +92,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
 
         add_action('wp_ajax_order_status_refresh', array($this, 'tazapay_order_status_refresh'));
 
-        add_action('woocommerce_api_tz_tazapay', array($this, 'webhook'));
-    }
-
-    public function capture_order_change($order_id){
-        
-        $order = wc_get_order($order_id);
-        $paymentMethod = get_post_meta($order_id, '_payment_method', true);
-
-        if ($paymentMethod == 'tz_tazapay') {
-
-            $user_email = $order->get_billing_email();
-            $txn_no = get_post_meta($order_id, 'txn_no', true);
-            $getEscrowstate = $this->tcpg_request_api_orderstatus($txn_no);
-           
-            $this->create_taza_logs($getEscrowstate->data->state);
-            if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
-                $order->update_status('processing', __('Payment successful. Transaction No: '. $txn_no, 'wc-tp-payment-gateway'));
-            }  else if(isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Awaiting_Payment' || $getEscrowstate->data->sub_state == 'Payment_Reported')){
-                $order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
-            }
-        }
-
+        add_action('woocommerce_api_tz_tazapay', array($this, 'redirect_from_tazapay'));
     }
 
     /*
@@ -476,95 +454,30 @@ class TCPG_Gateway extends WC_Payment_Gateway
         return true;
     }
 
-    function webhook()
+    function redirect_from_tazapay()
     {
-
-        //$this->create_taza_logs("Start > webhook");
-
-        header('HTTP/1.1 200 OK');
-        $respnse = json_decode(file_get_contents("php://input"), true);
-
-        if ($respnse['state'] == 'Payment_Received') {
-            $txn_no = $respnse['txn_no'];
-            $post_id = tazapay_post_id_by_meta_key_and_value('txn_no', $txn_no);
-            $my_post = array(
-            'ID' => $post_id,
-            'post_status' => 'wc-processing',
-            );
-            wp_update_post($my_post);
-        }
-        
-        if ($respnse['status'] == 'requested') {
-            $reference_id = $respnse['reference_id'];
-            $post_id = tazapay_post_id_by_meta_key_and_value('reference_id', $reference_id);
-            $my_post = array(
-            'ID' => $post_id,
-            'post_status' => 'wc-processing',
-            );
-            wp_update_post($my_post);
+        if (!isset($_GET['order_id'])) {
+            $this->create_taza_logs('return_from_tazapay order_id check failed');
+            exit;
         }
 
-        if ($respnse['status'] == 'approved') {
-            $reference_id = $respnse['reference_id'];
-            $post_id = tazapay_post_id_by_meta_key_and_value('reference_id', $reference_id);
-            $post = get_post($post_id);
-            $post->post_status = "wc-refunded";
-            wp_update_post($post);
-            $data = array(
-            'comment_post_ID' => $post_id,
-            'comment_author' => 'WooCommerce',
-            'comment_author_email' => 'woocommerce@democenter.net',
-            'comment_author_url' => '',
-            'comment_content' => 'Refund request has been approved, reference id ' . $reference_id,
-            'comment_author_IP' => '',
-            'comment_agent' => 'WooCommerce',
-            'comment_type' => 'order_note',
-            'comment_date' => date('Y-m-d H:i:s'),
-            'comment_date_gmt' => date('Y-m-d H:i:s'),
-            'comment_approved' => 1,
-            );
-            $comment_id = wp_insert_comment($data);
-        }
+        $order_id = (int)sanitize_text_field($_GET['order_id']);
+        $paymentMethod = get_post_meta($order_id, '_payment_method', true);
+        $order = wc_get_order($order_id);
 
-        if ($respnse['status'] == 'rejected') {
-            $reference_id = $respnse['reference_id'];
-            $post_id = tazapay_post_id_by_meta_key_and_value('reference_id', $reference_id);
-            $post = get_post($post_id);
-            $post->post_status = "wc-processing";
-            wp_update_post($post);
-            //Delete row when rejected
-            $args = array(
-            'posts_per_page' => 1,
-            'order' => 'DESC',
-            'post_parent' => $post_id,
-            'post_type' => 'shop_order_refund',
-            );
-
-            $get_children_array = get_children($args, ARRAY_A);
-            if (!empty($get_children_array)) {
-                foreach ($get_children_array as $post) {
-                    wp_delete_post($post['ID'], true);
-                }
+        if ($paymentMethod == 'tz_tazapay') {
+            $request_api_call = new TCPG_Gateway();
+            $txn_no = get_post_meta($order_id, 'txn_no', true);
+            $getEscrowstate = $request_api_call->tcpg_request_api_orderstatus($txn_no);
+            
+            if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
+                $order->update_status('processing', __('Payment successful. Transaction No: '. $txn_no, 'wc-tp-payment-gateway'));
+            }  else if(isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Awaiting_Payment' || $getEscrowstate->data->sub_state == 'Payment_Reported')){
+                $order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
             }
-            //End delete
-            $data = array(
-            'comment_post_ID' => $post_id,
-            'comment_author' => 'WooCommerce',
-            'comment_author_email' => 'woocommerce@democenter.net',
-            'comment_author_url' => '',
-            'comment_content' => 'Refund request has been cancelled',
-            'comment_author_IP' => '',
-            'comment_agent' => 'WooCommerce',
-            'comment_type' => 'order_note',
-            'comment_date' => date('Y-m-d H:i:s'),
-            'comment_date_gmt' => date('Y-m-d H:i:s'),
-            'comment_approved' => 1,
-            );
-            $comment_id = wp_insert_comment($data);
         }
 
-        //$this->create_taza_logs("End > webhook");
-        die();
+        wp_redirect(add_query_arg( 'status', $status, $this->get_return_url( $order )));exit;
     }
 
     public function update_status($post_id)
@@ -1207,6 +1120,8 @@ class TCPG_Gateway extends WC_Payment_Gateway
                 $items[] = $quantity . ' x ' . $item_name;
             }
 
+            $complete_url = site_url().'/?wc-api=tz_tazapay&order_id='.$order_id;
+
             $listofitems = implode(', ', $items);
             $description = get_bloginfo('name') . ' : ' . $listofitems;
             $checkoutArgs = array(
@@ -1224,7 +1139,7 @@ class TCPG_Gateway extends WC_Payment_Gateway
             "invoice_amount" => $order->get_total(),
             "txn_description" => $description,
             "callback_url" => $this->callBackUrl,
-            "complete_url" => $this->get_return_url($order),
+            "complete_url" => $complete_url,
             "error_url" => wc_get_checkout_url(),
             "transaction_source" => "woocommerce",
             );
@@ -1440,10 +1355,8 @@ class TCPG_Gateway extends WC_Payment_Gateway
                             <?php
 
                                 if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Payment_Received' || $getEscrowstate->data->sub_state == 'Payment_Done')) {
-                                    $order->update_status('processing', __('Payment successful. Transaction No: '. $txn_no, 'wc-tp-payment-gateway'));
                                     esc_html_e('Completed', 'wc-tp-payment-gateway');
                                 }  else if(isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->data->state == 'Awaiting_Payment' || $getEscrowstate->data->sub_state == 'Payment_Reported')){
-                                    $order->update_status('wc-on-hold', __('Awaiting offline payment', 'wc-tp-payment-gateway'));
                                     esc_html_e('On Hold', 'wc-tp-payment-gateway');
                                 }
                             ?>
