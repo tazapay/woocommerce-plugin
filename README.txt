@@ -4,7 +4,7 @@ Donate link: https://tazapay.com/
 Tags: TazaPay, WooCommerce, credit card, gateway
 Requires at least: 4.0
 Tested up to: 6.1.1
-Stable tag: 1.5.2
+Stable tag: 2.0.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -73,11 +73,13 @@ https://app.tazapay.com/signup
 
 == Screenshots ==
 
-1. Settings page
-2. Checkout page
-3. Redirect to sandbox
-4. Local bank transfer
-5. Order thank you page
+1. Admin Settings Page
+2. Admin Settings Page
+3. Woocommerce Checkout Page
+4. Customisable Payment UI
+5. Customisable Payment UI
+6. Customisable Payment Completion Screen
+7. Order thank you page
 
 == Changelog ==
 ver 1.1.3:  
@@ -131,5 +133,7 @@ ver 1.5.1:
 - Handled hook trigger for order status change.
 ver 1.5.2:
 - Fix order status change to processing.
+ver 2.0.0:
+- Enhanced user experience for payment.
 == Upgrade Notice ==
 
