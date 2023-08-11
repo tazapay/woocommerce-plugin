@@ -61,12 +61,15 @@ function tzp_process_getCheckoutResponse($response){
     // error_log(json_encode($response->reference_id));
     $order = wc_get_order((int)$response->reference_id);
     $orderStatus = $order->get_status();
+    update_post_meta($order_id, 'txn_order_status', $orderStatus);
+
+    
 
     // TODO: Add handling for refund statuses UPDATE: not required as handled in refund response processor
     if( 
         "Payment_Received" == $response->state 
-        || "Release_Authorized" == $response->state
-        || "Payout_Completed" == $response->state
+        // || "Release_Authorized" == $response->state
+        // || "Payout_Completed" == $response->state
     ){
 
         $settings = tzp_getAdminAPISettings();
@@ -78,8 +81,7 @@ function tzp_process_getCheckoutResponse($response){
             $order->reduce_order_stock();
 
         } else if( 'on-hold' == $orderStatus ) {
-
-            $order->update_status($targetStatus, __('TZ Payment verified.'));
+          $order->update_status($targetStatus, __('TZ Payment verified.'));
             $order->reduce_order_stock();
             
         /* } else if ( 'cancelled' == $orderStatus) {

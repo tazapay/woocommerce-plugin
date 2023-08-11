@@ -398,7 +398,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
                     $payment_err_msg .= "<br>" . esc_html($error->message);
                 }
             }
-            $order->add_order_note('TZ '.$payment_err_msg, true);
+            $order->add_order_note('TZ '.$payment_err_msg);
             wc_clear_notices();
             
             return wc_add_notice($payment_err_msg, 'error');

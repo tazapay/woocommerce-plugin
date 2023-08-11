@@ -115,6 +115,7 @@ function tzp_call_api($args,$params,$msg=""){
                 'headers' => array(
                     'Accept' => 'application/json',
                     'Authorization' => $authentication,
+                    
                     // 'Content-Type' => 'application/json',
                 ),
                 // 'body' => $body,
@@ -137,10 +138,12 @@ function tzp_call_api($args,$params,$msg=""){
                 'headers' => array(
                     'Authorization' => $authentication,
                     'Content-Type' => 'application/json',
+                    'Idempotency-Key' => $args['order_no'],
                 ),
                 'body' => $body,
             )
         );
+
     }
 
     // error_log(print_r($response,true));
@@ -224,7 +227,8 @@ function tzp_create_checkout_api($args, $order_id){
     $response = tzp_call_api(
         array(
             'method'   => 'POST',
-            'endpoint' => '/v1/checkout'
+            'endpoint' => '/v1/checkout',
+            'order_no' => $order_id
         ),
         $args,
         "Post Checkout API"

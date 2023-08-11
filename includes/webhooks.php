@@ -15,7 +15,7 @@ function tzp_webhook_payment_status_change(){
     if ($paymentMethod == 'tz_tazapay') {
 
         $orderStatus = $order->get_status();
-        $order->add_order_note('TZ Payment Webhook received', true);
+        $order->add_order_note('TZ Payment Webhook received');
 
         if( 'pending' == $orderStatus || 'on-hold' == $orderStatus){
 
@@ -24,6 +24,7 @@ function tzp_webhook_payment_status_change(){
             if( is_null($response) ){
                 exit;    
             }
+            // Note:- if webhook is triggered after payment is done we will to handle it for pre-order items.
 
             $state = tzp_process_getCheckoutResponse($response);
 
@@ -34,9 +35,11 @@ function tzp_webhook_payment_status_change(){
             switch ($state) {
                 case 'success':
                     # code...
+                    return tzp_thankyou_page($order_id);
                     break;
                 case 'failed':
                     # code...
+                    return tzp_thankyou_page($order_id);
                     break;
                 case 'processing':
                     # code...
@@ -55,7 +58,6 @@ function tzp_webhook_payment_status_change(){
 }
 
 function tzp_webhook_refund_status_change(){
-
     if (!isset($_GET['order_id'])) {
         // create_taza_logs('return_from_tazapay order_id check failed');
         exit;
@@ -67,7 +69,7 @@ function tzp_webhook_refund_status_change(){
 
     if ($paymentMethod == 'tz_tazapay') {
 
-        $order->add_order_note('TZ Refund Webhook received', true);
+        $order->add_order_note('TZ Refund Webhook received');
 
         $orderStatus = $order->get_status();
 

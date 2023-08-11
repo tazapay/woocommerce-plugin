@@ -2,7 +2,7 @@
 
 function tzp_thankyou_page($order_id){
     global $woocommerce;
-    
+
     $order = wc_get_order($order_id);
     $paymentMethod = $order->get_payment_method();
     
@@ -45,59 +45,6 @@ function tzp_thankyou_page($order_id){
             // TODO: test if checkout url present for cleared cart?
             wp_redirect( wc_get_checkout_url() );
             exit;
-        } else if( 'pending' == $orderStatus || 'on-hold' == $orderStatus ){
-
-            /*
-
-            #process result#
-
-            if(payment_status = 'succ'){
-                order>markComplete
-            }
-            else if(payment_status = 'failed')
-                // navigate to checkout page(with pyment failure notice) for a retry
-            else if(payment_status = 'pending')
-            */
-           
-            $response = tzp_get_checkout_api($order_id);
-
-            if( is_null($response) ){
-                wp_redirect( wc_get_checkout_url() );
-                wc_add_notice('Payment validation failed', 'error');
-                exit;    
-            }
-
-            $state = tzp_process_getCheckoutResponse($response);
-
-            if( 'success' == $state || 'fail' == $state ){
-
-                return tzp_thankyou_page($order_id);
-            } else {
-
-                // Reload order details and order status
-                $order = wc_get_order($order_id);
-                $orderStatus = $order->get_status();
-
-                if( 'pending' == $orderStatus ){
-
-                    // polling?
-                    // TODO: navigate to order-pay noload-sdk
-
-                    wc_add_notice('Payment not made', 'info');
-                    wp_redirect( $this->getPaymentUrl($order) );
-                    exit;
-                } else if( 'on-hold' == $orderStatus ){
-
-                    wc_add_notice('Payment not verified', 'info');
-                    wp_redirect( $order->get_view_order_url() );
-                    exit;
-                } else {
-
-                    wc_add_notice('Payment verification error', 'error');
-                    wp_redirect( $order->get_view_order_url() );
-                    exit;
-                }
-            }
         }
     }
 }
