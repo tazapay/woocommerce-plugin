@@ -3,8 +3,8 @@ Contributors: tazapay
 Donate link: https://tazapay.com/
 Tags: TazaPay, WooCommerce, credit card, gateway
 Requires at least: 4.0
-Tested up to: 6.1.1
-Stable tag: 2.0.2
+Tested up to: 6.3
+Stable tag: 2.0.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -139,5 +139,7 @@ ver 2.0.1:
 - Skipping status update in webhook for release authorized and payout completed statuses
 ver 2.0.2:
 - Skipping status update for pre-order items and avoiding multiple txns for same order id.
+ver 2.0.3:
+- Fix webhook issue.
 == Upgrade Notice ==
 

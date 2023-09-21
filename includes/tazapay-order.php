@@ -57,21 +57,12 @@ function tzp_getPaymentUrl($order_id){
 
 function tzp_process_getCheckoutResponse($response){
 
-    // error_log($response->reference_id);
-    // error_log(json_encode($response->reference_id));
-    $order = wc_get_order((int)$response->reference_id);
+    $order = wc_get_order((int)$response['partner_reference_id']);
     $orderStatus = $order->get_status();
-    update_post_meta($order_id, 'txn_order_status', $orderStatus);
-
+    $state = $response['state'];
+    $sub_state = $response['sub_state'];
     
-
-    // TODO: Add handling for refund statuses UPDATE: not required as handled in refund response processor
-    if( 
-        "Payment_Received" == $response->state 
-        // || "Release_Authorized" == $response->state
-        // || "Payout_Completed" == $response->state
-    ){
-
+    if("Payment_Received" == $state){
         $settings = tzp_getAdminAPISettings();
         $targetStatus = $settings['targetStatus'];
 
@@ -95,9 +86,9 @@ function tzp_process_getCheckoutResponse($response){
         }
 
         return 'success';
-    } else if( "Awaiting_Payment" == $response->state ){
+    } else if( "Awaiting_Payment" ==  $state ){
 
-        if( "Payment_Failed" ==  $response->sub_state ){
+        if( "Payment_Failed" ==  $sub_state ){
 
             if( 'pending' == $orderStatus || 'on-hold' == $orderStatus){
                 // TODO: mark fail or retry? => Retry
@@ -108,7 +99,7 @@ function tzp_process_getCheckoutResponse($response){
                 // order status and payment status mismatch
             }
             return 'failed';
-        } else if( "Payment_Reported" ==  $response->sub_state || 'under_review' == $response->sub_state){
+        } else if( "Payment_Reported" ==  $sub_state || 'under_review' == $sub_state){
 
             if( 'pending' == $orderStatus ){
                 $order->update_status('on-hold','Payment reported');

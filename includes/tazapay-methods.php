@@ -385,27 +385,6 @@ function tzp_TxnDetailsTable($order_id){
             <td><?php esc_html_e($txn_no, 'wc-tp-payment-gateway');?></td>
           </tr>
         <?php }?>
-        <tr>
-          <th scope="row"><?php esc_html_e('Payment status', 'wc-tp-payment-gateway');?></th>
-          <td>
-            <?php
-            if (isset($_POST['order-status']) && !empty($getEscrowstate->state) && !empty($getEscrowstate->sub_state)) { ?>
-              <p><strong><?php esc_html_e('Payment state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->state, 'wc-tp-payment-gateway');?></p>
-              <p><strong><?php esc_html_e('Payment sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->sub_state, 'wc-tp-payment-gateway');?></p>
-            <?php } ?>
-
-            <form method="post" name="tazapay-order-status" action="">
-                <input type="submit" name="order-status" value="Refresh Status">
-            </form>
-
-            <?php
-              if (isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->state == 'Payment_Received' || $getEscrowstate->sub_state == 'Payment_Done')) {
-                  esc_html_e('Completed', 'wc-tp-payment-gateway');
-              }  else if(isset($getEscrowstate->status) && $getEscrowstate->status == 'success' && ($getEscrowstate->state == 'Awaiting_Payment' || $getEscrowstate->sub_state == 'Payment_Reported')){
-                  esc_html_e('On Hold', 'wc-tp-payment-gateway');
-              } ?>
-          </td>
-        </tr>
       </tbody>
     </table>
     <?php

@@ -3,6 +3,9 @@
 
 function tzp_webhook_payment_status_change(){
 
+    header('HTTP/1.1 200 OK');
+	  $response = json_decode(file_get_contents("php://input"), true);
+
     if (!isset($_GET['order_id'])) {
         // create_taza_logs('return_from_tazapay order_id check failed');
         exit;
@@ -18,8 +21,6 @@ function tzp_webhook_payment_status_change(){
         $order->add_order_note('TZ Payment Webhook received');
 
         if( 'pending' == $orderStatus || 'on-hold' == $orderStatus){
-
-            $response = tzp_get_checkout_api($order_id);
 
             if( is_null($response) ){
                 exit;    
