@@ -17,44 +17,37 @@ function tzp_webhook_payment_status_change(){
 
     if ($paymentMethod == 'tz_tazapay') {
 
+        $state = $response['state'];
+        $sub_state = $response['sub_state'];
         $orderStatus = $order->get_status();
-        $order->add_order_note('TZ Payment Webhook received');
+        $order->add_order_note('TZ Payment Webhook received with ' . $state . ' & ' . $sub_state . '.Current status is ' . $orderStatus);
 
-        if( 'pending' == $orderStatus || 'on-hold' == $orderStatus){
-
-            if( is_null($response) ){
-                exit;    
-            }
-            // Note:- if webhook is triggered after payment is done we will to handle it for pre-order items.
-
-            $state = tzp_process_getCheckoutResponse($response);
-
-            // TODO: respond to webhook request
-            // so that if required the sender can retry later
-            // or mark webhook request as successfully posted and processed
-
-            switch ($state) {
-                case 'success':
-                    # code...
-                    return tzp_thankyou_page($order_id);
-                    break;
-                case 'failed':
-                    # code...
-                    return tzp_thankyou_page($order_id);
-                    break;
-                case 'processing':
-                    # code...
-                    break;
-                case 'pending':
-                    # code...
-                    break;                                        
-                default:
-                    # error handler
-                    # code...
-                    break;
-            }
+        if(is_null($response)){
+          exit;    
         }
 
+        $state = tzp_process_getCheckoutResponse($response);
+
+        switch ($state) {
+            case 'success':
+                # code...
+                return tzp_thankyou_page($order_id);
+                break;
+            case 'failed':
+                # code...
+                return tzp_thankyou_page($order_id);
+                break;
+            case 'processing':
+                # code...
+                break;
+            case 'pending':
+                # code...
+                break;                                        
+            default:
+                # error handler
+                # code...
+                break;
+        }
     }
 }
 

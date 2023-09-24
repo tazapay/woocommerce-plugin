@@ -62,16 +62,16 @@ function tzp_process_getCheckoutResponse($response){
     $state = $response['state'];
     $sub_state = $response['sub_state'];
     
-    if("Payment_Received" == $state){
+    if(PAYMENT_RECEIVED == $state){
         $settings = tzp_getAdminAPISettings();
         $targetStatus = $settings['targetStatus'];
 
-        if( 'pending' == $orderStatus){
+        if( PENDING == $orderStatus){
 
             $order->update_status($targetStatus, __('TZ Payment completed.'));
             $order->reduce_order_stock();
 
-        } else if( 'on-hold' == $orderStatus ) {
+        } else if( ON_HOLD == $orderStatus ) {
           $order->update_status($targetStatus, __('TZ Payment verified.'));
             $order->reduce_order_stock();
             
@@ -86,11 +86,11 @@ function tzp_process_getCheckoutResponse($response){
         }
 
         return 'success';
-    } else if( "Awaiting_Payment" ==  $state ){
+    } else if( AWAITING_PAYMENT ==  $state ){
 
-        if( "Payment_Failed" ==  $sub_state ){
+        if( PAYMENT_FAILED ==  $sub_state ){
 
-            if( 'pending' == $orderStatus || 'on-hold' == $orderStatus){
+            if( PENDING == $orderStatus || ON_HOLD == $orderStatus){
                 // TODO: mark fail or retry? => Retry
                 $order->add_order_note('TZ Payment attempt failed.');
 
@@ -99,10 +99,10 @@ function tzp_process_getCheckoutResponse($response){
                 // order status and payment status mismatch
             }
             return 'failed';
-        } else if( "Payment_Reported" ==  $sub_state || 'under_review' == $sub_state){
+        } else if( PAYMENT_REPORTED ==  $sub_state || UNDER_REVIEW == $sub_state){
 
-            if( 'pending' == $orderStatus ){
-                $order->update_status('on-hold','Payment reported');
+            if( PENDING == $orderStatus ){
+                $order->update_status(ON_HOLD,'Payment reported');
                 $order->add_order_note('TZ Payment reported.');
 
             } else {
@@ -113,12 +113,12 @@ function tzp_process_getCheckoutResponse($response){
 
             // Seems like order already processed
             // skip processing for other statuses
-            return 'pending';
+            return PENDING;
         }
     } else {
 
         // skip processing as order status should be pending already
-        if( 'pending' == $orderStatus ){
+        if( PENDING == $orderStatus ){
 
             // payment yet to be made
         } else {
@@ -126,7 +126,7 @@ function tzp_process_getCheckoutResponse($response){
             // order status and payment status mismatch
         }
 
-        return 'pending';
+        return PENDING;
     }
 
 }
@@ -139,9 +139,9 @@ function tzp_process_getRefundResponse($response,$order_id){
     $settings = tzp_getAdminAPISettings();
     $targetStatus = $settings['targetStatus'];
 
-    if( "approved" == $response->status ){
+    if( APPROVED == $response->status ){
 
-        if( 'processing' == $orderStatus || 'completed' == $orderStatus ){
+        if( PROCESSING == $orderStatus || COMPLETED == $orderStatus ){
 
             // Alternate // $order->set_status('');
             $order->update_status('refunded','Payment refunded');
@@ -154,20 +154,20 @@ function tzp_process_getRefundResponse($response,$order_id){
         }
 
         return 'approved';
-    } else if( "rejected" == $response->status ){
+    } else if( REJECTED == $response->status ){
 
         $order->add_order_note('TZ Refund rejected.');
         $order->update_status($targetStatus, __('Refund request rejected'));
 
         return 'rejected';
-    } else if( "refund_initiated" ==  $response->status){
+    } else if( REFUND_INITIATED ==  $response->status){
 
         $order->add_order_note('TZ Refund initiated.');
-        return 'pending';
-    } else if( 'under_review' == $response->status ){
+        return PENDING;
+    } else if( UNDER_REVIEW == $response->status ){
 
         $order->add_order_note('TZ Refund under review.');
-        return 'pending';
+        return PENDING;
     } else {
 
         return 'error';
