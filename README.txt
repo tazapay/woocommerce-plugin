@@ -140,6 +140,6 @@ ver 2.0.1:
 ver 2.0.2:
 - Skipping status update for pre-order items and avoiding multiple txns for same order id.
 ver 2.0.3:
-- Fix webhook issue.
+- Rewamp to support new platform.
 == Upgrade Notice ==
 

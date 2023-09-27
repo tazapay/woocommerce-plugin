@@ -56,6 +56,8 @@ class TPAY_Gateway extends WC_Payment_Gateway
         add_action('woocommerce_api_tz_refund', 'tzp_webhook_refund_status_change');
     }
 
+
+
     // Plugin options
     public function tzp_init_form_fields(){
 
@@ -65,34 +67,76 @@ class TPAY_Gateway extends WC_Payment_Gateway
         $api_header_description = '(To Learn more about generating key  <a href="' . esc_url($api_header_ref_link) . '" target="_blank" class="tazapay-click-here" >click here</a>)';
 
         // custom_style_css Block
-        $custom_style_css_ref_link = "https://docs.tazapay.com/reference/style-customisation-sdk";
+        $custom_style_css_ref_link = "https://docs.tazapay.com/v1/reference/style-customisation";
         $custom_style_css_description = 'To learn more about custom styling  <a href="' . esc_url($custom_style_css_ref_link) . '" target="_blank" class="tazapay-click-here">click here</a>';
         
         // remove_payment_methods Block TODO: Yet to Confirm List
         $remove_payment_methods_description = "You can choose to remove payment methods that you do not want your customers to use to make a payment. For example, you may choose to disable Wire Transfer because the payment confirmation is not instantaneous.";
         $paymentMethodList = array(
-            'Bank Redirect' => __('Bank Redirect', 'wc-tp-payment-gateway'),
-            'Card' => __('Card', 'wc-tp-payment-gateway'),
-            'Cash Payment' => __('Cash Payment', 'wc-tp-payment-gateway'),
-            'Debit Card' => __('Debit Card', 'wc-tp-payment-gateway'),
-            'Direct bank transfer (SEPA debit)' => __('Direct bank transfer (SEPA debit)', 'wc-tp-payment-gateway'),
-            'Fawry' => __('Fawry', 'wc-tp-payment-gateway'),
-            'FPX For Corporate' => __('FPX For Corporate', 'wc-tp-payment-gateway'),
-            'FPX For Individual' => __('FPX For Individual', 'wc-tp-payment-gateway'),
-            'Instant Bank Transfer' => __('Instant Bank Transfer', 'wc-tp-payment-gateway'),
-            'Instant EFT' => __('Instant EFT', 'wc-tp-payment-gateway'),
-            'Local Bank Transfer' => __('Local Bank Transfer', 'wc-tp-payment-gateway'),
-            'Mobile Money' => __('Mobile Money', 'wc-tp-payment-gateway'),
-            'Mobile Wallets' => __('Mobile Wallets', 'wc-tp-payment-gateway'),
-            'New Payment Platform' => __('New Payment Platform', 'wc-tp-payment-gateway'),
-            'PayNow QR' => __('PayNow QR', 'wc-tp-payment-gateway'),
-            'PIX-QR' => __('PIX-QR', 'wc-tp-payment-gateway'),
-            'PromptPay QR' => __('PromptPay QR', 'wc-tp-payment-gateway'),
-            'Sofort' => __('Sofort', 'wc-tp-payment-gateway'),
-            'SPEI – Electronic Bank Transfer' => __('SPEI – Electronic Bank Transfer', 'wc-tp-payment-gateway'),
-            'Ticket' => __('Ticket', 'wc-tp-payment-gateway'),
-            'UPI ID' => __('UPI ID', 'wc-tp-payment-gateway'),
-            'Wire Transfer' => __('Wire Transfer', 'wc-tp-payment-gateway'),
+          "ovo_idr"=> __("ovo_idr", "wc-tp-payment-geteway"),
+          "bank_push_vnd"=> __("bank_push_vnd", "wc-tp-payment-geteway"),
+          "bank_push_ngn"=> __("bank_push_ngn", "wc-tp-payment-geteway"),
+          "bank_push_kes"=> __("bank_push_kes", "wc-tp-payment-geteway"),
+          "bank_push_mxn"=> __("bank_push_mxn", "wc-tp-payment-geteway"),
+          "bank_push_php"=> __("bank_push_php", "wc-tp-payment-geteway"),
+          "bank_push_brl"=> __("bank_push_brl", "wc-tp-payment-geteway"),
+          "poli_nzd"=> __("poli_nzd", "wc-tp-payment-geteway"),
+          "internet_banking_zar"=> __("internet_banking_zar", "wc-tp-payment-geteway"),
+          "fpx_corp_myr"=> __("fpx_corp_myr", "wc-tp-payment-geteway"),
+          "fpx_ind_myr"=> __("fpx_ind_myr", "wc-tp-payment-geteway"),
+          "poli_aud"=> __("poli_aud", "wc-tp-payment-geteway"),
+          "wire_transfer"=> __("wire_transfer", "wc-tp-payment-geteway"),
+          "fawry_egp"=> __("fawry_egp", "wc-tp-payment-geteway"),
+          "cash_payment_brl"=> __("cash_payment_brl", "wc-tp-payment-geteway"),
+          "boleto_brl"=> __("boleto_brl", "wc-tp-payment-geteway"),
+          "mobile_money_egp"=> __("mobile_money_egp", "wc-tp-payment-geteway"),
+          "qris_idr"=> __("qris_idr", "wc-tp-payment-geteway"),
+          "pix_brl"=> __("pix_brl", "wc-tp-payment-geteway"),
+          "upi_inr"=> __("upi_inr", "wc-tp-payment-geteway"),
+          "paynow_sgd"=> __("paynow_sgd", "wc-tp-payment-geteway"),
+          "promptpay_thb"=> __("promptpay_thb", "wc-tp-payment-geteway"),
+          "payid_aud"=> __("payid_aud", "wc-tp-payment-geteway"),
+          "sofort_eur"=> __("sofort_eur", "wc-tp-payment-geteway"),
+          "bank_initiation_gbp"=> __("bank_initiation_gbp", "wc-tp-payment-geteway"),
+          "sofort_gbp"=> __("sofort_gbp", "wc-tp-payment-geteway"),
+          "bank_initiation_eur"=> __("bank_initiation_eur", "wc-tp-payment-geteway"),
+          "dana_idr"=> __("dana_idr", "wc-tp-payment-geteway"),
+          "internet_banking_cop"=> __("internet_banking_cop", "wc-tp-payment-geteway"),
+          "mobile_money_ghs"=> __("mobile_money_ghs", "wc-tp-payment-geteway"),
+          "mobile_money_ugx"=> __("mobile_money_ugx", "wc-tp-payment-geteway"),
+          "mobile_money_tzs"=> __("mobile_money_tzs", "wc-tp-payment-geteway"),
+          "mobile_money_kes"=> __("mobile_money_kes", "wc-tp-payment-geteway"),
+          "mobilebanking_thb"=> __("mobilebanking_thb", "wc-tp-payment-geteway"),
+          "linkaja_idr"=> __("linkaja_idr", "wc-tp-payment-geteway"),
+          "card"=> __("card", "wc-tp-payment-geteway"),
+          "local_bank_transfer_usd"=> __("local_bank_transfer_usd", "wc-tp-payment-geteway"),
+          "local_bank_transfer_ngn"=> __("local_bank_transfer_ngn", "wc-tp-payment-geteway"),
+          "local_bank_transfer_kes"=> __("local_bank_transfer_kes", "wc-tp-payment-geteway"),
+          "local_bank_transfer_ars"=> __("local_bank_transfer_ars", "wc-tp-payment-geteway"),
+          "local_bank_transfer_mxn"=> __("local_bank_transfer_mxn", "wc-tp-payment-geteway"),
+          "local_bank_transfer_gbp"=> __("local_bank_transfer_gbp", "wc-tp-payment-geteway"),
+          "local_bank_transfer_eur"=> __("local_bank_transfer_eur", "wc-tp-payment-geteway"),
+          "local_bank_transfer_php"=> __("local_bank_transfer_php", "wc-tp-payment-geteway"),
+          "local_bank_transfer_nzd"=> __("local_bank_transfer_nzd", "wc-tp-payment-geteway"),
+          "local_bank_transfer_krw"=> __("local_bank_transfer_krw", "wc-tp-payment-geteway"),
+          "local_bank_transfer_jpy"=> __("local_bank_transfer_jpy", "wc-tp-payment-geteway"),
+          "local_bank_transfer_idr"=> __("local_bank_transfer_idr", "wc-tp-payment-geteway"),
+          "local_bank_transfer_hkd"=> __("local_bank_transfer_hkd", "wc-tp-payment-geteway"),
+          "local_bank_transfer_aud"=> __("local_bank_transfer_aud", "wc-tp-payment-geteway"),
+          "local_bank_transfer_sgd"=> __("local_bank_transfer_sgd", "wc-tp-payment-geteway"),
+          "local_bank_transfer_cad"=> __("local_bank_transfer_cad", "wc-tp-payment-geteway"),
+          "grabpay_php"=> __("grabpay_php", "wc-tp-payment-geteway"),
+          "shopeepay_php"=> __("shopeepay_php", "wc-tp-payment-geteway"),
+          "paymaya_php"=> __("paymaya_php", "wc-tp-payment-geteway"),
+          "card_local_ngn"=> __("card_local_ngn", "wc-tp-payment-geteway"),
+          "card_cup_sgd"=> __("card_cup_sgd", "wc-tp-payment-geteway"),
+          "card_cup_usd"=> __("card_cup_usd", "wc-tp-payment-geteway"),
+          "card_cup_cny"=> __("card_cup_cny", "wc-tp-payment-geteway"),
+          "payeasy_jpy"=> __("payeasy_jpy", "wc-tp-payment-geteway"),
+          "payeasy_cash_jpy"=> __("payeasy_cash_jpy", "wc-tp-payment-geteway"),
+          "alipay_cny"=> __("alipay_cny", "wc-tp-payment-geteway"),
+          "blik_pln"=> __("blik_pln", "wc-tp-payment-geteway"),
+          "giropay_eur"=> __("giropay_eur", "wc-tp-payment-geteway"),
         );
         
         // modes and others Block
@@ -151,14 +195,12 @@ class TPAY_Gateway extends WC_Payment_Gateway
                 'type'        => 'password',
                 'placeholder' => 'Please Enter Production API_Key',
                 'class'       => 'tazapay_live_mode_fields',
-                'description' => __('', 'wc-tp-payment-gateway'),
             ),
             'prod_secret_key' => array(
                 'title'       => __('API_Secret', 'wc-tp-payment-gateway'),
                 'type'        => 'password',
                 'placeholder' => 'Please Enter Production API_Secret',
                 'class'       => 'tazapay_live_mode_fields',
-                'description' => __('', 'wc-tp-payment-gateway'),
             ),
             'sandbox_api_header' => array(
                 'title'       => __('Enter test mode (Sandbox) API keys', 'wc-tp-payment-gateway'),
@@ -170,14 +212,12 @@ class TPAY_Gateway extends WC_Payment_Gateway
                 'title'       => __('API_Key', 'wc-tp-payment-gateway'),
                 'type'        => 'password',
                 'placeholder' => 'Please Enter Sandbox API_Key',
-                'description' => __('', 'wc-tp-payment-gateway'),
                 'class'       => 'tazapay_test_mode_fields',
             ),
             'sandbox_secret_key' => array(
                 'title'       => __('API_Secret', 'wc-tp-payment-gateway'),
                 'type'        => 'password',
                 'placeholder' => 'Please Enter Sandbox API_Secret',
-                'description' => __('', 'wc-tp-payment-gateway'),
                 'class'       => 'tazapay_test_mode_fields',
             ),
             'tazapay_order_status' => array(
@@ -203,13 +243,6 @@ class TPAY_Gateway extends WC_Payment_Gateway
                     'data-placeholder' => __( 'Select payment methods', 'wc-tp-payment-gateway' ),
                 ),
             ),
-            'client_sdk_version' => array(
-                'title'       => __('SDK Version', 'wc-tp-payment-gateway'),
-                'type'        => 'text',
-                'description' => __('Set the version for Client SDK', 'wc-tp-payment-gateway'),
-                'default'     => __('1.1', 'wc-tp-payment-gateway'),
-                'desc_tip'    => true,
-            ),
             'custom_style_css' => array(
                 'title'       => __('Custom Style CSS', 'wc-tp-payment-gateway'),
                 'type'        => 'textarea',
@@ -227,13 +260,13 @@ class TPAY_Gateway extends WC_Payment_Gateway
         $this->env_mode = $this->get_option( 'select_env_mode' );
         $this->api_key = $this->get_option('prod_api_key');
         $this->api_secret = $this->get_option('prod_secret_key');
-        $this->base_api_url = 'https://api.tazapay.com';
-        $this->sdk_version = $this->get_option('client_sdk_version');
+        $this->base_api_url = 'https://service.tazapay.com';
+        $this->sdk_version = '2.0';
 
         if($this->env_mode === 'Sandbox'){
             $this->api_key = $this->get_option('sandbox_api_key');
             $this->api_secret = $this->get_option('sandbox_secret_key');
-            $this->base_api_url = 'https://api-sandbox.tazapay.com';
+            $this->base_api_url = 'https://service-sandbox.tazapay.com';
         }
         
         $this->orderStatusOnSuccess = $this->get_option('tazapay_order_status');
@@ -243,7 +276,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
 
     // Process Gateway Settings Form Fields.
     public function tzp_update_admin_options() {
-
+      
         $this->init_settings();
         $post_data = $this->get_post_data();
         $error_fields = array();
@@ -265,8 +298,9 @@ class TPAY_Gateway extends WC_Payment_Gateway
         
         foreach ( $this->get_form_fields() as $key => $field ) {
             $setting_value = $this->get_field_value( $key, $field, $post_data );
+
             if(!in_array($key, $error_fields)){
-                $this->settings[ $key ] = $setting_value;
+                $this->settings[$key] = $setting_value;
             }
         }
 
@@ -366,8 +400,6 @@ class TPAY_Gateway extends WC_Payment_Gateway
     public function process_payment($order_id){
         global $woocommerce;
 
-        //create_taza_logs("Start > Payment process ({$order_id})");
-
         $order = wc_get_order($order_id);
 
         foreach (WC()->cart->get_cart() as $cart_item) {
@@ -378,17 +410,23 @@ class TPAY_Gateway extends WC_Payment_Gateway
         $listofitems = implode(', ', $items);
         $description = get_bloginfo('name') . ' : ' . $listofitems;
 
-        // removed: $error_url = tzp_getCheckoutUrl($order);
-        $error_url = wc_get_checkout_url(); 
+        $abort_url = wc_get_checkout_url(); 
         $complete_url = $order->get_checkout_order_received_url();
         $callback_url = site_url().'/?wc-api=tz_payment&order_id='.$order_id;
 
+        // Get the posted data from the checkout form.
+        $posted_data = $_POST;
+  
+        // Check if the "ship to a different address" checkbox is checked.
+        $ship_to_different_address = isset($posted_data['ship_to_different_address']) ? true : false;
+
         $checkoutArgs = tzp_checkoutRequestBody($order, $description, array(
-            'error_url' => $error_url,
+            'abort_url' => $abort_url,
             'complete_url' => $complete_url,
             'callback_url' => $callback_url,
+            'same_as_billing_address'=> $ship_to_different_address,
         ));
-      
+
         $result = tzp_create_checkout_api($checkoutArgs, $order_id);
 
         if ($result->status === 'error') {
@@ -407,24 +445,31 @@ class TPAY_Gateway extends WC_Payment_Gateway
         if ($result->status === 'success') {
             //create_taza_logs("End > Payment Process ({$order_id}) \n");
            
-            $order->add_order_note('TZ Payment created - '.$result->data->txn_no);
+            $order->add_order_note('TZ Payment created - '.$result->data->payin);
             $settings = tzp_getAdminAPISettings();
 
             // Existing Behaviour
-            $redirect_url = $result->data->redirect_url;
+            $redirect_url = $result->data->url;
+
             // NOTE: If no UUID require Remove account_id in post meta
-            $account_id = isset($result->data->buyer->id) ? sanitize_text_field($result->data->buyer->id) : '';
-            update_post_meta($order_id, 'txn_no', $result->data->txn_no);
+            $account_id = isset($result->data->customer) ? sanitize_text_field($result->data->customer) : '';
+            update_post_meta($order_id, 'txn_no', $result->data->payin);
             update_post_meta($order_id, 'account_id', $account_id);
             update_post_meta($order_id, 'redirect_url', $redirect_url);
-            update_post_meta($order_id, 'token', $result->data->token);
-
-            // TODO: New Behaviour :- want to change API req body fields value
             
+
+            // this is to extract key from url
+            $parts = parse_url($redirect_url);
+
+            if (isset($parts['path'])) {
+              $pathParts = explode('/', $parts['path']);
+              $lastKey = end($pathParts);
+              update_post_meta($order_id, 'token', $lastKey);
+              WC()->session->set( 'token' , $lastKey );
+            }
             WC()->session->set( 'order_id' , $order_id );
-            WC()->session->set( 'token' , $result->data->token );
             WC()->session->set( 'complete_url' , $complete_url );
-            WC()->session->set( 'abort_url' , $error_url );
+            WC()->session->set( 'abort_url' , $abort_url );
             WC()->session->set( 'style' , $settings['paymentStyle'] );
 
             return tzp_getPaymentUrl($order);
@@ -433,7 +478,6 @@ class TPAY_Gateway extends WC_Payment_Gateway
     }
 
     public function process_refund($orderId, $amount = null, $reason = 'refund'){
-        //create_taza_logs("Start > Refund process_refund ({$orderId})");
         $order = wc_get_order($orderId);
         $txn_no = get_post_meta($orderId, 'txn_no', true);
         if (!$order || !$txn_no) {
@@ -442,70 +486,39 @@ class TPAY_Gateway extends WC_Payment_Gateway
 
         if ($order->get_payment_method() == 'tz_tazapay') {
 
-            // TODO: validate get_refunds, get_remaining_refund_amount, get_total_refunded
+          $callback_url = site_url().'/?wc-api=tz_refund&order_id='.$orderId;
 
-            $convamount = floatval($amount);
-            $callback_url = site_url().'/?wc-api=tz_refund&order_id='.$orderId;
+          $refundArg = array(
+            "payin" => $txn_no,
+            "payment_attempt"=> "",
+            "amount"=> formatToInt64($amount),
+            "reason"=> $reason,
+            "remarks"=> "",
+            "source"=> "woocommerce",
+            "webhook_url" => $callback_url,
+            "metadata" => array(
+              "reference_id" => $orderId,
+            )
+          );
 
-            if( $order->get_total() != $convamount ){
+          $result = tzp_refund_request_api($refundArg, $orderId);
 
-                $link = 'https://app.tazapay.com';
-                if( $this->env_mode == 'Sandbox' ){
-                
-                    $link = 'https://sandbox.tazapay.com';
-                }
+          if (!empty($result)) {
+              if ($result->status == 'error') {
+                  $message = $result->errors[0]->message;
+                  return new WP_Error('error', __($message, 'woocommerce'));
+              }
 
-                // blocking partial refunds temporarily
-                $message = 'Partial refunds are currently not supported via plugin.';
-                $message = $message.' Please visit ';
-                $message = $message.$link;
-                $message = $message.' to make partial refunds';
-                return new WP_Error('error', __($message, 'woocommerce'));
-
-            } else {
-
-                // only allowing full refunds
-
-
-                $refundArg = array(
-                    'txn_no' => $txn_no,
-                    'amount' => $convamount+0.00,
-                    'callback_url' => $callback_url,
-                    'remarks' => $reason,
-                );
-
-                $result = tzp_refund_request_api($refundArg, $orderId);
-
-                if (!empty($result)) {
-                    if ($result->status == 'error') {
-                        $message = $result->errors[0]->message;
-                        return new WP_Error('error', __($message, 'woocommerce'));
-                    }
-
-                    //Success
-                    if ($result->status == 'created') {
-                        $reference_id = $result->data->reference_id;
-                        // TODO: use add_post_meta to store multiple values as array
-                        update_post_meta($orderId, 'reference_id', $reference_id);
-                        $order->add_order_note('TZ Refund requested.');
-                        return true;
-                    }
-                }
-            }
+              //Success
+              if ($result->status == 'success') {
+                  $reference_id = $result->data->metadata->metadata->reference_id;
+                  update_post_meta($orderId, 'reference_id', $reference_id);
+                  $order->add_order_note('TZ Refund requested.');
+                  return true;
+              }
+          }
         }
 
         return false;
     }
-
-    /*
-    // You will need it if you want your custom credit card form, Step 4 is about it
-    public function payment_fields(){
-            
-    }
-
-    // Fields validation
-    public function validate_fields() {
-
-    }
-    */
 }

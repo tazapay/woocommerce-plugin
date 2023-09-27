@@ -14,18 +14,19 @@
 
 define('TZP_CSS_JSS_VERISON', time());
 define('TZP_PUBLIC_ASSETS_DIR', plugins_url('assets/', __FILE__));
-define('PAYMENT_RECEIVED', 'Payment_Received');
+// constants
+define('SUCCEEDED', 'succeeded');
 define('PENDING', 'pending');
 define('ON_HOLD', 'on-hold');
-define('AWAITING_PAYMENT', 'Awaiting_Payment');
-define('PAYMENT_FAILED', 'Payment_Failed');
-define('PAYMENT_REPORTED', 'Payment_Reported');
-define('UNDER_REVIEW', 'under_review');
-define('APPROVED', 'approved');
-define('REJECTED', 'rejected');
+define('FAILED', 'failed');
+define('REQUIRES_ACTION', 'requires_action');
+define('CHECKOUT_PAID', 'checkout.paid');
+define('REFUND_SUCCEEDED', 'refund.succeeded');
+define('REFUND_FAILED', 'refund.failed');
+define('REFUND_PENDING', 'refund.pending');
 define('COMPLETED', 'completed');
 define('PROCESSING', 'processing');
-define('REFUND_INITIATED', 'refund_initiated');
+define('APPROVED', 'approved');
 
 $plugin = plugin_basename(__FILE__);
 

@@ -8,7 +8,6 @@ var tokenRequest = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-
 	if(tpay_params?.token){
 
 		let style = null

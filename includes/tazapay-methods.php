@@ -1,5 +1,11 @@
 <?php
 
+function formatToInt64($amount) {
+  $formattedAmount = number_format($amount, 2, '.', '');
+  $formattedAmount = round($formattedAmount * 100);
+  return $formattedAmount;
+}
+
 // get Checkout API Args
 function tzp_checkoutRequestBody($order, $description, $paymentArgs){
 
@@ -15,7 +21,7 @@ function tzp_checkoutRequestBody($order, $description, $paymentArgs){
         "line1"         => $order->get_billing_address_1(),
         "line2"         => $order->get_billing_address_2(),
         "city"          => $order->get_billing_city(),
-        "state"         => $order->get_billing_state(),
+        "state"         => "",
         "country"       => $order->get_billing_country(),
         "postal_code"   => $order->get_billing_postcode(),
     ),
@@ -25,49 +31,71 @@ function tzp_checkoutRequestBody($order, $description, $paymentArgs){
     ),
   );
 
+  if($order->get_billing_state()) {
+    $billingDetails['address']['state'] = $order->get_billing_country() . '-' . $order->get_billing_state();
+  }
+
   $shippingDetails = array(
     "name"              => $order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name(),
     "address"   => array(
         "line1"         => $order->get_shipping_address_1(),
         "line2"         => $order->get_shipping_address_2(),
         "city"          => $order->get_shipping_city(),
-        "state"         => $order->get_shipping_state(),
+        "state"         => "",
         "country"       => $order->get_shipping_country(),
         "postal_code"   => $order->get_shipping_postcode(),
     ),
-    "phone"     => array(
-        "country_code"  => $shippingPhoneCode,
-        "number"        => $order->get_shipping_phone(),
-    ),
   );
 
+  if($order->get_shipping_state()) {
+    $shippingDetails['address']['state'] = $order->get_shipping_country() . '-' . $order->get_shipping_state();
+  }
+
+  if($order->get_shipping_phone()) {
+    $shippingDetails['phone'] = array(
+        "country_code"  => $shippingPhoneCode,
+        "number"        => $order->get_shipping_phone(),
+    );
+  }
+
+  $customerDetails = array(
+    "email"             => $order->get_billing_email(),
+    "name"              => $order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name(),
+    "country"           => $order->get_billing_country(),
+  );
+
+  if($order->get_shipping_phone()) {
+    $customerDetails['phone'] = array(
+        "country_code"  => $shippingPhoneCode,
+        "number"        => $order->get_shipping_phone(),
+    );
+  }
+
+  $today = new DateTime();
+  $today->modify('+7 days');
+  $expiresAt = $today->format('Y-m-d\TH:i:s\Z');
+
   $checkoutArgs = array(
-    "buyer"             => array(
-        "email"             => $order->get_billing_email(),
-        "country"           => $order->get_billing_country(),
-        "ind_bus_type"      => "Individual",
-        "first_name"        => $order->get_billing_first_name(),
-        "last_name"         => $order->get_billing_last_name(),
-        "contact_code"      => $billingPhoneCode,
-        "contact_number"    => $order->get_billing_phone(),
-    ),
-    "reference_id"          => strval($order->get_id()),
+    "amount"        => formatToInt64($order->get_total()),
     "invoice_currency"      => $order->get_currency(),
-    "invoice_amount"        => floatval($order->get_total()),
-    "txn_description"       => $description,
-    "transaction_source"    => "woocommerce_".$plugin['Version'],
-    "callback_url"          => $paymentArgs['callback_url'],
-    "complete_url"          => $paymentArgs['complete_url'],
-    "error_url"             => $paymentArgs['error_url'],
+    "transaction_description"       => $description,
+    "txn_source_category"    => "woocommerce",
+    "txn_source"            => $plugin['Version'],
+    "webhook_url"          => $paymentArgs['callback_url'],
+    "success_url"          => $paymentArgs['complete_url'],
+    "cancel_url"             => $paymentArgs['abort_url'],
     "shipping_details"  => $shippingDetails,
-    "billing_details"   => $billingDetails
+    "billing_details"   => $billingDetails,
+    "customer_details"  => $customerDetails,
+    "same_as_billing_address"  => $paymentArgs['same_as_billing_address'],
+    "expires_at" => $expiresAt,
+    "reference_id"      => strval($order->get_id()),
   );
 
   if( !(bool) empty($apiSettings['paymentFilter'])){
-    $checkoutArgs['filter'] = $apiSettings['paymentFilter'];
+    $checkoutArgs['remove_payment_methods'] = $apiSettings['paymentFilter'];
   }
 
-  // error_log(json_encode($checkoutArgs));
   return $checkoutArgs;
 }
 
@@ -311,21 +339,23 @@ function tzp_getphonecode($countryCode){
 
 // validates the api keys entered in admin page.
 function tzp_validate_api_keys($data){
+  // tzp_create_taza_logs('tzp_validate_api_keys  api called');
+  
   $mode = $data['woocommerce_tz_tazapay_select_env_mode'];
 
   $api_key = $data['woocommerce_tz_tazapay_prod_api_key'];
   $api_secret = $data['woocommerce_tz_tazapay_prod_secret_key'];
-  $base_api_url = 'https://api.tazapay.com';
+  $base_api_url = 'https://service.tazapay.com';
 
   
   if($mode === 'Sandbox'){
       $api_key = $data['woocommerce_tz_tazapay_sandbox_api_key'];
       $api_secret = $data['woocommerce_tz_tazapay_sandbox_secret_key'];
-      $base_api_url = 'https://api-sandbox.tazapay.com';
+      $base_api_url = 'https://service-sandbox.tazapay.com';
   }
   
   $isValidKeys = tzp_collectMetaData_api($api_key, $api_secret, $base_api_url);
-  if(isset($isValidKeys->errors[0]->code) && $isValidKeys->errors[0]->code === 1100){
+  if($isValidKeys->status == 'error'){
       return true;
   }
   return false;
@@ -450,14 +480,12 @@ function tzp_order_meta_general($order){
     <h3><?php esc_html_e('Transaction Details', 'wc-tp-payment-gateway');?></h3>
 
     <div class="address">
-      <p><strong><?php esc_html_e('TazaPay Account UUID: ', 'wc-tp-payment-gateway');?></strong> <?php esc_html_e($account_id, 'wc-tp-payment-gateway');?></p>
       <p><strong><?php esc_html_e('TazaPay Transaction no: ', 'wc-tp-payment-gateway');?></strong> <?php esc_html_e($txn_no, 'wc-tp-payment-gateway');?></p>
       <?php
       $getEscrowstate = tzp_get_checkout_api($order_id);
-      if (isset($_GET['order-status']) && !empty($getEscrowstate->state) && !empty($getEscrowstate->sub_state)) {
+      if ($getEscrowstate->status == 'success') {
         ?>
-        <p><strong><?php esc_html_e('Payment state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->state, 'wc-tp-payment-gateway');?></p>
-        <p><strong><?php esc_html_e('Payment sub_state: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->sub_state, 'wc-tp-payment-gateway');?></p>
+        <p><strong><?php esc_html_e('Payment status: ', 'wc-tp-payment-gateway');?></strong><?php esc_html_e($getEscrowstate->data->payment_status, 'wc-tp-payment-gateway');?></p>
         <?php
       }
       ?>
