@@ -54,30 +54,30 @@ function tzp_getPaymentUrl($order_id){
     }
 }
 
-function tzp_process_getCheckoutResponse($response){
+function tzp_process_getCheckoutResponse($response, $order_id){
 
-    $order = wc_get_order((int)$response['data']['payin']['reference_id']);
-    $payment_status = $response['data']['payin']['status'];
+    $order = wc_get_order($order_id);
+    $payment_status = $response['data']['payment_status'];
     $event_type = $response['type'];
 
     $orderStatus = $order->get_status();
 
-    if($payment_status  == SUCCEEDED && $event_type == CHECKOUT_PAID){
+    if($payment_status  == PAID && $event_type == CHECKOUT_PAID){
       $settings = tzp_getAdminAPISettings();
       $targetStatus = $settings['targetStatus'];
 
       $order->update_status($targetStatus, __('TZ Payment completed.'));
       $order->reduce_order_stock();
 
-      return 'succeeded';
+      return SUCCEEDED;
     } else if($payment_status == REQUIRES_ACTION && ON_HOLD != $orderStatus){
       $order->update_status(ON_HOLD,'TZ Payment reported.');
           
-      return 'processing';
+      return PROCESSING;
     } else if($payment_status == FAILED){
       $order->update_status(FAILED, __('TZ Payment failed.'));
 
-      return 'failed';
+      return FAILED;
     }
 }
 
@@ -90,15 +90,15 @@ function tzp_process_getRefundResponse($response,$order_id){
     if($payment_status == SUCCEEDED && $event_type == REFUND_SUCCEEDED){
       $order->update_status('refunded','TZ Payment refunded.');
 
-      return 'approved';
+      return APPROVED;
     } else if($payment_status == FAILED && $event_type == REFUND_FAILED){
       $order->add_order_note('TZ Refund failed.');
 
-      return 'failed';
+      return FAILED;
     } else if($payment_status == PENDING && $event_type == REFUND_PENDING){
       $order->add_order_note('TZ Refund initiated.');
 
-      return 'pending';
+      return PENDING;
     } else {
       return 'error';
     }

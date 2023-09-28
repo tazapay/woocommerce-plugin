@@ -60,14 +60,14 @@ function tzp_checkoutRequestBody($order, $description, $paymentArgs){
 
   $customerDetails = array(
     "email"             => $order->get_billing_email(),
-    "name"              => $order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name(),
+    "name"              => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
     "country"           => $order->get_billing_country(),
   );
 
-  if($order->get_shipping_phone()) {
+  if($order->get_billing_phone()) {
     $customerDetails['phone'] = array(
-        "country_code"  => $shippingPhoneCode,
-        "number"        => $order->get_shipping_phone(),
+        "country_code"  => $billingPhoneCode,
+        "number"        => $order->get_billing_phone(),
     );
   }
 

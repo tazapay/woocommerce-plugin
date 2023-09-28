@@ -15,6 +15,7 @@
 define('TZP_CSS_JSS_VERISON', time());
 define('TZP_PUBLIC_ASSETS_DIR', plugins_url('assets/', __FILE__));
 // constants
+define('PAID', 'paid');
 define('SUCCEEDED', 'succeeded');
 define('PENDING', 'pending');
 define('ON_HOLD', 'on-hold');

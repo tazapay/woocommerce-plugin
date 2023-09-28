@@ -18,11 +18,11 @@ function tzp_webhook_payment_status_change(){
       exit;    
     }
 
-    $payment_status = $response['data']['payin']['status'];
+    $payment_status = $response['data']['payment_status'];
     $orderStatus = $order->get_status();
     $order->add_order_note('TZ Payment Webhook received with ' . $payment_status . '. Current status is ' . $orderStatus);
 
-    $state = tzp_process_getCheckoutResponse($response);
+    $state = tzp_process_getCheckoutResponse($response, $order_id);
 
     switch ($state) {
       case SUCCEEDED:
