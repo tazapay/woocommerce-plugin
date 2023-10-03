@@ -14,13 +14,19 @@ function tzp_webhook_payment_status_change(){
   $paymentMethod = $order->get_payment_method();
 
   if ($paymentMethod == 'tz_tazapay') {
-    if( is_null($response) ){
+
+    if(is_null($response)){
       exit;    
     }
 
     $payment_status = $response['data']['payment_status'];
     $orderStatus = $order->get_status();
     $order->add_order_note('TZ Payment Webhook received with ' . $payment_status . '. Current status is ' . $orderStatus);
+    $payment_done = get_post_meta($order_id, 'payment_done', true);
+
+    if($payment_done == true){
+      exit;    
+    }
 
     $state = tzp_process_getCheckoutResponse($response, $order_id);
 

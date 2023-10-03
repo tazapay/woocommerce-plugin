@@ -68,6 +68,7 @@ function tzp_process_getCheckoutResponse($response, $order_id){
 
       $order->update_status($targetStatus, __('TZ Payment completed.'));
       $order->reduce_order_stock();
+      update_post_meta($order_id, 'payment_done', true);
 
       return SUCCEEDED;
     } else if($payment_status == REQUIRES_ACTION && ON_HOLD != $orderStatus){
