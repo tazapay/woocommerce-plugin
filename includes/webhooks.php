@@ -2,7 +2,7 @@
 
 
 function tzp_webhook_payment_status_change(){
-  header('HTTP/1.1 200 OK');
+  http_response_code(200);
 	$response = json_decode(file_get_contents("php://input"), true);
 
   if (!isset($_GET['order_id'])) {
@@ -21,10 +21,10 @@ function tzp_webhook_payment_status_change(){
 
     $payment_status = $response['data']['payment_status'];
     $orderStatus = $order->get_status();
-    $order->add_order_note('TZ Payment Webhook received with ' . $payment_status . '. Current status is ' . $orderStatus);
-    $payment_done = get_post_meta($order_id, 'payment_done', true);
+    $order->add_order_note('Current status is ' . $orderStatus . '. TZ Payment Webhook received with ' . $payment_status);
+    $payment_done = (int)get_post_meta( $order_id, 'payment_done', true);
 
-    if($payment_done == true){
+    if($payment_done == 1 && $orderStatus == COMPLETED){
       exit;    
     }
 
@@ -48,7 +48,7 @@ function tzp_webhook_payment_status_change(){
 }
 
 function tzp_webhook_refund_status_change(){
-  header('HTTP/1.1 200 OK');
+  http_response_code(200);
 	$response = json_decode(file_get_contents("php://input"), true);
 
   if (!isset($_GET['order_id'])) {
@@ -67,7 +67,7 @@ function tzp_webhook_refund_status_change(){
 
     $payment_status = $response['data']['status'];
     $orderStatus = $order->get_status();
-    $order->add_order_note('TZ Refund Webhook received with status ' . $payment_status . '. Current status is ' . $orderStatus);
+    $order->add_order_note('Current status is ' . $orderStatus . '. TZ Refund Webhook received with ' . $payment_status);
 
     if($orderStatus == PROCESSING || $orderStatus == COMPLETED){
 

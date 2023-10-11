@@ -401,6 +401,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
         global $woocommerce;
 
         $order = wc_get_order($order_id);
+        $items = array();
 
         foreach (WC()->cart->get_cart() as $cart_item) {
             $item_name = $cart_item['data']->get_title();

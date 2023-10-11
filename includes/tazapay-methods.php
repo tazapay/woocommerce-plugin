@@ -25,11 +25,15 @@ function tzp_checkoutRequestBody($order, $description, $paymentArgs){
         "country"       => $order->get_billing_country(),
         "postal_code"   => $order->get_billing_postcode(),
     ),
-    "phone"     => array(
+  );
+
+  // send phone field only if phone number is present
+  if($order->get_billing_phone()) {
+    $billingDetails['phone'] = array(
         "country_code"  => $billingPhoneCode,
         "number"        => $order->get_billing_phone(),
-    ),
-  );
+    );
+  }
 
   if($order->get_billing_state()) {
     $billingDetails['address']['state'] = $order->get_billing_country() . '-' . $order->get_billing_state();

@@ -141,5 +141,7 @@ ver 2.0.2:
 - Skipping status update for pre-order items and avoiding multiple txns for same order id.
 ver 2.0.3:
 - Rewamp to support new platform.
+ver 3.0:
+- Rewamp to support new platform and bug fixes.
 == Upgrade Notice ==
 

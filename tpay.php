@@ -4,7 +4,7 @@
  * Plugin Name:       Tazapay Checkout Payment Gateway
  * Plugin URI:        https://wordpress.org/plugins/tazapay
  * Description:       Pay securely with buyer protection.
- * Version:           2.0.3
+ * Version:           3.0
  * Author:            Tazapay
  * Author URI:        https://wordpress.org/plugins/tazapay
  * License:           GPL-2.0+
