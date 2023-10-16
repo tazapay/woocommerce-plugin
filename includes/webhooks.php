@@ -24,7 +24,7 @@ function tzp_webhook_payment_status_change(){
     $order->add_order_note('Current status is ' . $orderStatus . '. TZ Payment Webhook received with ' . $payment_status);
     $payment_done = (int)get_post_meta( $order_id, 'payment_done', true);
 
-    if($payment_done == 1 && $orderStatus == COMPLETED){
+    if($payment_done == 1){
       exit;    
     }
 
