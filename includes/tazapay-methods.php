@@ -7,7 +7,7 @@ function formatToInt64($amount) {
 }
 
 // get Checkout API Args
-function tzp_checkoutRequestBody($order, $description, $paymentArgs){
+function tzp_checkoutRequestBody($order, $description, $paymentArgs, $items){
 
   $plugin = tzp_get_plugin_info();
   $apiSettings = tzp_getAdminAPISettings();
@@ -94,6 +94,7 @@ function tzp_checkoutRequestBody($order, $description, $paymentArgs){
     "same_as_billing_address"  => $paymentArgs['same_as_billing_address'],
     "expires_at" => $expiresAt,
     "reference_id"      => strval($order->get_id()),
+    "items" =>            $items,
   );
 
   if( !(bool) empty($apiSettings['paymentFilter'])){
@@ -337,7 +338,11 @@ function tzp_getphonecode($countryCode){
     'ZM' => '260',
     'ZW' => '263',
     ];
-    $phoneCode = $countryCodeArray[$countryCode];
+    $phoneCode = "";
+
+    if($countryCode){
+        $phoneCode = $countryCodeArray[$countryCode];
+    }
     return $phoneCode;
 }
 

@@ -401,13 +401,30 @@ class TPAY_Gateway extends WC_Payment_Gateway
         global $woocommerce;
 
         $order = wc_get_order($order_id);
-        $items = array();
 
-        foreach (WC()->cart->get_cart() as $cart_item) {
-            $item_name = $cart_item['data']->get_title();
-            $quantity = $cart_item['quantity'];
-            $items[] = $quantity . ' x ' . $item_name;
+        $cart_items = WC()->cart->get_cart();
+        $items = array();
+        $cart_items_array = array();
+
+        foreach ( $cart_items as $cart_item_key => $cart_item ) {
+            $product_name = $cart_item['data']->get_name(); // Get product name
+            $quantity = $cart_item['quantity']; // Get quantity
+            $price = $cart_item['data']->get_price(); // Get price
+            $description = $cart_item['data']->get_description(); // Get description
+
+            // Creating an object for each cart item
+            $cart_item_obj = new stdClass();
+            $cart_item_obj->name = $product_name;
+            $cart_item_obj->quantity = $quantity;
+            $cart_item_obj->amount = formatToInt64($price);
+            $cart_item_obj->description = $description;
+
+            $items[] = $quantity . ' x ' . $product_name;
+
+            // Adding the object to the array
+            $cart_items_array[] = $cart_item_obj;
         }
+
         $listofitems = implode(', ', $items);
         $description = get_bloginfo('name') . ' : ' . $listofitems;
 
@@ -426,7 +443,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
             'complete_url' => $complete_url,
             'callback_url' => $callback_url,
             'same_as_billing_address'=> $ship_to_different_address,
-        ));
+        ), $cart_items_array);
 
         $result = tzp_create_checkout_api($checkoutArgs, $order_id);
 
