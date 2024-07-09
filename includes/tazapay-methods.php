@@ -94,11 +94,14 @@ function tzp_checkoutRequestBody($order, $description, $paymentArgs, $items){
     "same_as_billing_address"  => $paymentArgs['same_as_billing_address'],
     "expires_at" => $expiresAt,
     "reference_id"      => strval($order->get_id()),
-    "items" =>            $items,
   );
-
+  
   if( !(bool) empty($apiSettings['paymentFilter'])){
     $checkoutArgs['remove_payment_methods'] = $apiSettings['paymentFilter'];
+  }
+
+  if($order->get_billing_country() == "IN"){
+    $checkoutArgs['items'] = $items;
   }
 
   return $checkoutArgs;
