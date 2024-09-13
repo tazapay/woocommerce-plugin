@@ -54,6 +54,10 @@ class TPAY_Gateway extends WC_Payment_Gateway
         // We need this webhook for auto status updation
         add_action('woocommerce_api_tz_payment', 'tzp_webhook_payment_status_change');
         add_action('woocommerce_api_tz_refund', 'tzp_webhook_refund_status_change');
+
+        add_action('before_woocommerce_init', 'tzp_declare_cart_checkout_blocks_compatibility');
+
+        add_action('woocommerce_blocks_loaded', 'tzp_register_payment_method_type');
     }
 
 
@@ -391,7 +395,26 @@ class TPAY_Gateway extends WC_Payment_Gateway
             exit;
         }
     }
-    
+
+    function tzp_declare_cart_checkout_blocks_compatibility() {
+      if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, true);
+      }
+    }
+
+    function tzp_register_payment_method_type() {
+      if( ! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
+        return;
+      }
+      require_once plugin_dir_path(__FILE__) . '../block/wc_block_checkout.php';
+      add_action(
+        'woocommerce_blocks_payment_method_type_registration',
+        function( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+            $payment_method_registry->register( new  WC_Tazapay_Blocks);
+        }
+      );
+     }
+     
     public function get_description()
     {
         return $this->get_option('description');
