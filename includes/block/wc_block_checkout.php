@@ -3,10 +3,11 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 
 final class WC_Tazapay_Blocks extends AbstractPaymentMethodType {
 
-	protected $name = 'mygateway';
+	protected $name = 'TPAY_Gateway';
 
 	public function initialize() {
 		$this->settings = get_option( 'woocommerce_tz_tazapay_settings', [] );
+    $this->gateway = new TPAY_Gateway();
 	}
 
 	public function is_active() {
@@ -32,6 +33,12 @@ final class WC_Tazapay_Blocks extends AbstractPaymentMethodType {
 		}
 		return [ 'wc-tzp-blocks-integration' ];
 	}
-
+   
+  public function get_payment_method_data() {
+		return [
+			'title' => $this->gateway->title,
+			'description' => $this->gateway->description,
+		];
+	}
 }
 ?>
