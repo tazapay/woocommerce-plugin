@@ -105,3 +105,26 @@ function tzp_plugin_settings_link($links)
     array_unshift($links, $settings_link);
     return $links;
 }
+
+add_action('before_woocommerce_init', 'tzp_declare_cart_checkout_blocks_compatibility');
+
+function tzp_declare_cart_checkout_blocks_compatibility() {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+      \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+    }
+  }
+
+  add_action('woocommerce_blocks_loaded', 'tzp_register_payment_method_type');
+
+   function tzp_register_payment_method_type() {
+  if(!class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
+		return;
+	}
+  require_once plugin_dir_path(__FILE__) . 'block/wc_block_checkout.php';
+  add_action(
+    'woocommerce_blocks_payment_method_type_registration',
+    function( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+        $payment_method_registry->register( new  WC_Tazapay_Blocks);
+    }
+  );
+ }
