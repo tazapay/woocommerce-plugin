@@ -145,5 +145,7 @@ ver 3.0:
 - Rewamp to support new platform and bug fixes.
 ver 3.0.1:
 - Rewamp to support Tbridge payment options like (UPI,NetBanking and cards).
+ver 3.0.2:
+- Rewamp to support block based checkout.
 == Upgrade Notice ==
 
