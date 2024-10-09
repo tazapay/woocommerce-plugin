@@ -6,7 +6,7 @@ function tzp_thankyou_page($order_id){
     $order = wc_get_order($order_id);
     $paymentMethod = $order->get_payment_method();
     
-    if ($paymentMethod == 'tz_tazapay') {
+    if ($paymentMethod == 'tazapay') {
 
         /*
         TODO:

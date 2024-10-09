@@ -1,25 +1,25 @@
 <?php
 
 function tzp_getAdminAPISettings(){
-    $woocommerce_tz_tazapay_settings = get_option('woocommerce_tz_tazapay_settings');
+    $woocommerce_tazapay_settings = get_option('woocommerce_tazapay_settings');
 
-    $envmode = $woocommerce_tz_tazapay_settings['select_env_mode'];
-    $apiKey = $woocommerce_tz_tazapay_settings['prod_api_key'];
-    $secretKey = $woocommerce_tz_tazapay_settings['prod_secret_key'];
+    $envmode = $woocommerce_tazapay_settings['select_env_mode'];
+    $apiKey = $woocommerce_tazapay_settings['prod_api_key'];
+    $secretKey = $woocommerce_tazapay_settings['prod_secret_key'];
     $baseApiUrl = 'https://service.tazapay.com';
 
     if($envmode === 'Sandbox'){
-      $apiKey = $woocommerce_tz_tazapay_settings['sandbox_api_key'];
-      $secretKey = $woocommerce_tz_tazapay_settings['sandbox_secret_key'];
+      $apiKey = $woocommerce_tazapay_settings['sandbox_api_key'];
+      $secretKey = $woocommerce_tazapay_settings['sandbox_secret_key'];
       $baseApiUrl = 'https://service-sandbox.tazapay.com';
     }
 
-    $branding = $woocommerce_tz_tazapay_settings['branding'] == 'yes' ? true : false;
+    $branding = $woocommerce_tazapay_settings['branding'] == 'yes' ? true : false;
 
-    $targetStatus = $woocommerce_tz_tazapay_settings['tazapay_order_status'];
+    $targetStatus = $woocommerce_tazapay_settings['tazapay_order_status'];
 
-    $paymentFilter = $woocommerce_tz_tazapay_settings['remove_payment_methods'];
-    $paymentStyle = $woocommerce_tz_tazapay_settings['custom_style_css'];
+    $paymentFilter = $woocommerce_tazapay_settings['remove_payment_methods'];
+    $paymentStyle = $woocommerce_tazapay_settings['custom_style_css'];
 
     $paymentStyle = preg_replace('~[\r\n]+~', '', $paymentStyle);
 

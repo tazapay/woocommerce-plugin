@@ -350,16 +350,16 @@ function tzp_getphonecode($countryCode){
 function tzp_validate_api_keys($data){
   // tzp_create_taza_logs('tzp_validate_api_keys  api called');
   
-  $mode = $data['woocommerce_tz_tazapay_select_env_mode'];
+  $mode = $data['woocommerce_tazapay_select_env_mode'];
 
-  $api_key = $data['woocommerce_tz_tazapay_prod_api_key'];
-  $api_secret = $data['woocommerce_tz_tazapay_prod_secret_key'];
+  $api_key = $data['woocommerce_tazapay_prod_api_key'];
+  $api_secret = $data['woocommerce_tazapay_prod_secret_key'];
   $base_api_url = 'https://service.tazapay.com';
 
   
   if($mode === 'Sandbox'){
-      $api_key = $data['woocommerce_tz_tazapay_sandbox_api_key'];
-      $api_secret = $data['woocommerce_tz_tazapay_sandbox_secret_key'];
+      $api_key = $data['woocommerce_tazapay_sandbox_api_key'];
+      $api_secret = $data['woocommerce_tazapay_sandbox_secret_key'];
       $base_api_url = 'https://service-sandbox.tazapay.com';
   }
   
@@ -406,7 +406,7 @@ function tzp_TxnDetailsTable($order_id){
   $paymentMethod = $order->get_payment_method();
   $txn_no = get_post_meta($order_id, 'txn_no', true);
   
-  if (!empty($txn_no) && $paymentMethod == 'tz_tazapay') {
+  if (!empty($txn_no) && $paymentMethod == 'tazapay') {
     $user_email = $order->get_billing_email();
     $getEscrowstate = tzp_get_checkout_api($order_id);
     ?>
@@ -453,7 +453,7 @@ function tzp_remove_refund_button_for_refunded(){
     if( !is_null($order) && $order ){
       $paymentMethod = $order->get_payment_method();
 
-      if ($paymentMethod == 'tz_tazapay') {
+      if ($paymentMethod == 'tazapay') {
 
         $orderStatus = $order->get_status();
 
@@ -483,7 +483,7 @@ function tzp_order_meta_general($order){
   $account_id = get_post_meta($order_id, 'account_id', true);
   $txn_no = get_post_meta($order_id, 'txn_no', true);
 
-  if ($order->get_payment_method() == 'tz_tazapay' && isset($account_id) && !empty($account_id)) {
+  if ($order->get_payment_method() == 'tazapay' && isset($account_id) && !empty($account_id)) {
     ?>
     <br class="clear" />
     <h3><?php esc_html_e('Transaction Details', 'wc-tp-payment-gateway');?></h3>
