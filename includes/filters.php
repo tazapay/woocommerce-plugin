@@ -2,7 +2,7 @@
 
 // Add custom tazapay icons to WooCommerce Checkout Page
 function tzp_woocommerce_icons($icon, $id){
-    if ($id === 'tz_tazapay') {
+    if ($id === 'tazapay') {
 
         $settings = tzp_getAdminAPISettings();
 

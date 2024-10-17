@@ -17,7 +17,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
     public function __construct() {
 
 
-        $this->id = 'tz_tazapay'; // payment gateway plugin ID
+        $this->id = 'tazapay'; // payment gateway plugin ID
         $this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
         $this->has_fields = true; // in case you need a custom form
         $this->method_title = 'Tazapay Payments';
@@ -52,8 +52,8 @@ class TPAY_Gateway extends WC_Payment_Gateway
         add_action('woocommerce_thankyou_' . $this->id , 'tzp_thankyou_page', 20);
 
         // We need this webhook for auto status updation
-        add_action('woocommerce_api_tz_payment', 'tzp_webhook_payment_status_change');
-        add_action('woocommerce_api_tz_refund', 'tzp_webhook_refund_status_change');
+        add_action('woocommerce_api_payment', 'tzp_webhook_payment_status_change');
+        add_action('woocommerce_api_refund', 'tzp_webhook_refund_status_change');
     }
 
 
@@ -282,7 +282,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
         $error_fields = array();
 
         if(tzp_validate_api_keys($post_data)){
-            if($post_data['woocommerce_tz_tazapay_select_env_mode'] === 'Sandbox'){
+            if($post_data['woocommerce_tazapay_select_env_mode'] === 'Sandbox'){
                 WC_Admin_Settings::add_error(__('Please Enter Valid Sandbox API Keys.', 'wc-tp-payment-gateway'));
                 array_push($error_fields, 'sandbox_api_key', 'sandbox_secret_key');
             }else{
@@ -291,7 +291,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
             }
         }
 
-        if(!tzp_validate_custom_style_css($post_data['woocommerce_tz_tazapay_custom_style_css'])){
+        if(!tzp_validate_custom_style_css($post_data['woocommerce_tazapay_custom_style_css'])){
             WC_Admin_Settings::add_error(__('Please Enter Custom Styling in Valid JSON Format.', 'wc-tp-payment-gateway'));
             array_push($error_fields, 'custom_style_css');
         }
@@ -341,7 +341,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
         $order = wc_get_order($order_id);
         $orderStatus = $order->get_status();
 
-        if( 'tz_tazapay' != $order->get_payment_method() ) {
+        if( 'tazapay' != $order->get_payment_method() ) {
 
             return;
         }
@@ -430,7 +430,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
 
         $abort_url = wc_get_checkout_url(); 
         $complete_url = $order->get_checkout_order_received_url();
-        $callback_url = site_url().'/?wc-api=tz_payment&order_id='.$order_id;
+        $callback_url = site_url().'/?wc-api=payment&order_id='.$order_id;
 
         // Get the posted data from the checkout form.
         $posted_data = $_POST;
@@ -502,9 +502,9 @@ class TPAY_Gateway extends WC_Payment_Gateway
             return new WP_Error('error', __('Refund failed: No transaction ID', 'woocommerce'));
         }
 
-        if ($order->get_payment_method() == 'tz_tazapay') {
+        if ($order->get_payment_method() == 'tazapay') {
 
-          $callback_url = site_url().'/?wc-api=tz_refund&order_id='.$orderId;
+          $callback_url = site_url().'/?wc-api=refund&order_id='.$orderId;
 
           $refundArg = array(
             "payin" => $txn_no,
