@@ -527,6 +527,7 @@ class TPAY_Gateway extends WC_Payment_Gateway
     $result = tzp_create_checkout_api($checkoutArgs, $order_id);
 
     if ($result->status === 'error') {
+
       $payment_err_msg = "";
       foreach ($result->errors as $key => $error) {
         if (isset($error->message)) {
@@ -534,9 +535,12 @@ class TPAY_Gateway extends WC_Payment_Gateway
         }
       }
       $order->add_order_note('TZ ' . $payment_err_msg);
-      wc_clear_notices();
 
-      return wc_add_notice($payment_err_msg, 'error');
+      wc_add_notice($payment_err_msg, 'error');
+      return array(
+        'result' => 'failure',
+        'redirect' => wc_get_checkout_url()
+      );
     }
 
     if ($result->status === 'success') {

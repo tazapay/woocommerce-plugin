@@ -158,11 +158,11 @@ function tzp_call_api($args, $params, $msg = "")
   } else {
     $api_array = json_decode(wp_remote_retrieve_body($response));
   }
+  // tzp_create_taza_logs($api_array->status);
 
   if (!$api_array || 'success' != $api_array->status) {
     error_log('API failed - ' . $msg);
     error_log(json_encode($api_array));
-    return;
   }
 
   return $api_array;
@@ -214,7 +214,11 @@ function tzp_create_checkout_api($args, $order_id)
     "Post Checkout API"
   );
 
-  if ($order_id != $response->data->reference_id) {
+  if ($response->status == "error") {
+    esc_html_e("Something went wrong.Error code - " . $response->errors[0]->code, "wc-tp-payment-gateway");
+  }
+
+  if ($response->status == "success" && $order_id != $response->data->reference_id) {
     error_log('Invalid api response - partner_reference_id mismatch');
     error_log('expected: ' . $order_id . ' got: ' . $response->data->reference_id);
     error_log(json_encode($response->data));
