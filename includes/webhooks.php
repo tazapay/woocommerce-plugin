@@ -13,7 +13,7 @@ function tzp_webhook_payment_status_change(){
   $order = wc_get_order($order_id);
   $paymentMethod = $order->get_payment_method();
 
-  if ($paymentMethod == 'tz_tazapay') {
+  if ($paymentMethod == 'tazapay') {
 
     if(is_null($response)){
       exit;    
@@ -59,7 +59,7 @@ function tzp_webhook_refund_status_change(){
   $order = wc_get_order($order_id);
   $paymentMethod = $order->get_payment_method();
 
-  if ($paymentMethod == 'tz_tazapay') {
+  if ($paymentMethod == 'tazapay') {
 
     if( is_null($response) ){
         exit;    
